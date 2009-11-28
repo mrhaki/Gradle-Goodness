@@ -1,0 +1,5 @@
+.gradle
+dataaccess/build
+domain/build
+services/build
+web/build
