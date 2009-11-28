@@ -1,0 +1,10 @@
+task helloWorld << { ant.echo 'Hello world.' }
+
+/* 
+We can run this task with the following command:
+
+$ gradle helloWorld
+$ gradle hello
+$ gradle h
+$ gradle hW
+*/
