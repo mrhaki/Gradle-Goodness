@@ -1,0 +1,1 @@
+usePlugin 'java'defaultTasks 'clean', 'build'  // Run tasks clean and build if no task is specified.
