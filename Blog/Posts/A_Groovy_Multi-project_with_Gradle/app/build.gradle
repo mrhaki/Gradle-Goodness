@@ -1,0 +1,49 @@
+subprojects {
+    usePlugin 'groovy'
+    version = '1.0.0-SNAPSHOT'
+    group = 'com.mrhaki.blog'
+    configurations.compile.transitive = true  // Make sure transitive project dependencies are resolved.
+    
+    repositories {
+        mavenCentral()
+    }
+    
+    dependencies {
+        groovy 'org.codehaus.groovy:groovy:1.6.5'
+    }
+    
+    task initProject(description: 'Initialize project') << { task ->
+        task.project.sourceSets.all.groovy.srcDirs*.each {             
+            println "Create $it"
+            it.mkdirs() 
+        }
+    }
+}
+
+project(':dataaccess') {
+    dependencies {
+        compile project(':domain')
+    }
+}
+
+project(':services') {
+    dependencies {
+        compile project(':dataaccess')
+    }
+}
+
+project(':web') {
+    usePlugin 'war'  // jetty plugin extends war plugin, so we get all war plugin functionality as well.
+    usePlugin 'jetty'
+    
+    dependencies {
+        compile project(':services')  // Because configurations.compile.transitive = true we only have to specify services project, although we also reference dataaccess and domain projects.
+    }
+    
+    // Add extra code to initProject task.
+    initProject << { task ->
+        def webInfDir = new File(task.project.webAppDir, '/WEB-INF')
+        println "Create $webInfDir"
+        webInfDir.mkdirs()
+    }
+}
