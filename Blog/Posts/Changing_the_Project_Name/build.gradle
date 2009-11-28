@@ -1,0 +1,4 @@
+task 'displayProjectName' << {
+    println project.name
+}
+displayProjectName.description = 'Display project name'
