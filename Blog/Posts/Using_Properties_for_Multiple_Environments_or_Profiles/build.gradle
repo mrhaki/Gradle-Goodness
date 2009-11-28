@@ -1,0 +1,17 @@
+loadConfiguration()
+
+task printProps << {
+    println "serverName:  $config.serverName"
+    println "mail.server: $config.mail.server"
+    println "mail.port:   $config.mail.port"
+}
+
+def loadConfiguration() {
+    def environment = hasProperty('env') ? env : 'dev'
+    setProperty 'environment', environment
+    println "Environment is set to $environment"
+    
+    def configFile = file('config.groovy')
+    def config = new ConfigSlurper(environment).parse(configFile.toURL())
+    setProperty 'config', config
+}
