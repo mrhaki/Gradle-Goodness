@@ -1,0 +1,15 @@
+package com.mrhaki.blog
+
+import org.junit.Test
+
+class GroovyGreetingTest {
+    def service = new GroovyGreetingImpl()
+
+    @Test void testGreeting() {
+        assert 'Hello mrhaki. Greeting from Groovy.' == service.greet('mrhaki')
+    }
+    
+    @Test void testGreetingNull() {
+        assert 'Hello stranger. Greeting from Groovy.' == service.greet(null)
+    }
+}
