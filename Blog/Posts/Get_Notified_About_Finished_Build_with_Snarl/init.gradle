@@ -1,0 +1,23 @@
+class SnarlNotifyListener extends BuildAdapter {
+    void buildFinished(BuildResult result) {
+        if (result.failure) {
+            snarlNotify 'Gradle build failure', result.failure.message, true            
+        } else {
+            snarlNotify 'Gradle build finished', 'Build successful'
+        }
+    }
+    
+    void snarlNotify(title, message = 'No message', sticky = false) {
+        def cmd = [
+            'Snarl_CMD.exe',  // Replace with local path.
+            'snShowMessage',
+            sticky ? '0' : '10',
+            title,
+            message,
+            '$GRADLE_HOME/docs/groovydoc/groovy.ico'  // Set to local path.
+        ]
+    }
+}
+
+def listener = new SnarlNotifyListener()
+gradle.addBuildListener listener
