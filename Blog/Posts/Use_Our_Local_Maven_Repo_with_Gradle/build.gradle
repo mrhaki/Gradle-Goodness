@@ -1,0 +1,20 @@
+usePlugin 'java'  // Java plugin to build our JAR artifact.
+usePlugin 'maven'  // Maven plugin to install artifact in the local Maven repo.
+
+def localMavenRepo = 'file://' + new File(System.getProperty('user.home'), '.m2/repository').absolutePath
+repositories {
+    // Use local Maven repo location. We don't need this if we only want to install
+    // an artifact, but we do need it if we want to use dependencies from the local
+    // repository.
+    mavenRepo urls: localMavenRepo
+}
+
+// Project configuration:
+version = '1.0-SNAPSHOT'
+group = 'com.mrhaki.gradle'
+
+// The following line is not necessary. Default the install task depends on the 
+// jar task, but this means no tests and checks are executed when we use the 
+// install task. The following line makes the install task depend on the build task
+// and now all tests and checks are done before install is executed (just like Maven).
+install.dependsOn ':build'
