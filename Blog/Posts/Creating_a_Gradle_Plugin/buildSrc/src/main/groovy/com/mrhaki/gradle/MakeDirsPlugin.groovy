@@ -9,13 +9,13 @@ class MakeDirsPlugin implements Plugin {
         // Assign new convenction object to project.
         // makedirs is a key for the plugins map. We can choose the name
         // ourselves here.
-        def convention = new MakeDirsPluginConvention()
+        def convention = new MakeDirsPluginConvention(project)
         project.convention.plugins.makedirs = convention
         
         // Closure to create directory.
         def createDirs = {
             // Use basePackageDir property.
-            def newDir = new File(it, project.basePackageDir) 
+            def newDir = new File(it, project.convention.plugins.makedirs.basePackageDir) 
             newDir.mkdirs()
         }
         
