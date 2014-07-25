@@ -1,0 +1,71 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Define A Short Plugin Id For Custom Plugins</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Define A Short Plugin Id For Custom Plugins</h3>
+
+<div class="post">
+<p>We can extend Gradle easily with the Gradle plugin system. We can write plugins and apply them on our build scripts with the <code>apply()</code> method. We can use the complete classname of the plugin as an argument, but also a short plugin id. For example if we want to apply the Java plugin we can write <code>apply plugin: 'java'</code>. 'java' is the short plugin id for the class <code>org.gradle.api.plugins.JavaPlugin</code>.</p>
+<p>We can define a short plugin id for our own custom plugins as well, so it is much easier to apply them in our scripts. In the classpath of our plugin we must add the directory <code>META-INF/gradle-plugins</code>. In this directory we create a properties file where the name is equal to the short plugin id we want to use. Inside the property file we must define a single property <code>implementation-class</code> that points to our plugin class.</p>
+<p>Let's see how we can do this in the following sample. We first create a very simple Gradle plugin which only adds a task <em>demo</em> to the project. The task prints out the message <em>MrhakiPlugin says hi!</em>.</p>
+<pre class="brush:groovy">
+// File: buildSrc/src/main/groovy/com/mrhaki/gradle/MrHakiPlugin.groovy
+package com.mrhaki.gradle
+
+import org.gradle.api.*
+
+class MrHakiPlugin implements Plugin&lt;Project&gt; {
+    def void apply(Project project) {
+        project.task('demo') << {
+            println "MrhakiPlugin says hi!"
+        }
+    }
+}
+</pre>
+<p>Next we create the properties file <code>mrhaki.properties</code>, because we want to use <em>mrhaki</em> as the short plugin id.</p>
+<pre class="brush:plain">
+# File: buildSrc/src/main/resources/META-INF/gradle-plugins/mrhaki.properties
+implementation-class=com.mrhaki.gradle.MrHakiPlugin
+</pre>
+<p>And that is all we need to do. Let's create a <code>build.gradle</code> script and execute our plugin:</p>
+<pre class="brush:groovy">
+// File: build.gradle
+apply plugin: 'mrhaki'
+</pre>
+<pre class="brush:plain:light:true">
+$ gradle -q demo
+MrhakiPlugin says hi!
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Using Optional Ant Task in Gradle</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Using Optional Ant Task in Gradle</h3>
+
+<div class="post">
+<p>Gradle uses Groovy's AntBuilder for Ant integration. But if we want to use an optional Ant task we must do something extra, because the optional tasks and their dependencies are not in the Gradle classpath. Luckily we only have to define our dependencies for the optional task in the <code>build.gradle</code> file and we can define and use the optional Ant task.</p>
+<p>In the following sample we are using the <em>scp</em> Ant optional task. We define a configuration and assign the dependencies to this configuration. Then we can define the task and set the classpath property to the classpath of the configuration. We use <code>asPath</code> to convert the configuration classpath for the Ant task. In the sample we also see how we can ask for user input when the script is run. The passphrase for the ssh keyfile is a secret and we don't want to keep it in a file somewhere, so we ask the user for it. The Java method <code>System.console()</code> return a reference to the console and with <code>readPassword()</code> we can get the value for the passphrase.</p>
+<pre class="brush:groovy">
+// File: build.gradle
+
+// We define a new configuration with the name 'sshAntTask'.
+// This configuration is used to define our dependencies.
+configurations {
+    sshAntTask
+}
+
+// Define the Maven central repository to look for the dependencies.
+repositories {
+    mavenCentral()
+}
+
+// Assign dependencies to the sshAntTask configuration.
+dependencies {
+    sshAntTask 'org.apache.ant:ant-jsch:1.7.1', 'jsch:jsch:0.1.29'
+}
+
+// Sample task which uses the scp Ant optional task.
+task update {
+    description = 'Update files on remote server.'
+
+    // Get passphrase from user input.
+    def console = System.console()
+    def passphrase = console.readPassword('%s: ', 'Please enter the passphrase for the keyfile')
+        
+    // Redefine scp Ant task, with the classpath property set to our newly defined
+    // sshAntTask configuration classpath.
+    ant.taskdef(name: 'scp', classname: 'org.apache.tools.ant.taskdefs.optional.ssh.Scp',
+            classpath: configurations.sshAntTask.asPath)
+            
+    // Invoke the scp Ant task. (Use gradle -i update to see the output of the Ant task.)
+    ant.scp(todir: 'mrhaki@servername:/home/mrhaki',
+            keyfile: '${user.home}/.ssh/id_rsa', 
+            passphrase: passphrase as String, // Use phassphrase entered by the user.
+            verbose: 'true') {
+        fileset(dir: 'work') {
+            include(name: '**/**')
+        }
+    }            
+}
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

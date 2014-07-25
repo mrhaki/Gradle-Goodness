@@ -1,0 +1,44 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Profiling Information</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Profiling Information</h3>
+
+<div class="post">
+If we want to know more about how much time is spent in tasks we can use the <code>--profile</code> command-line option. Gradle will generate a report file in the <code>build/reports/profile</code> directory. This report file is a HTML file with information about how much time is spent by the different tasks and processes of Gradle.<br />
+The following report file is for a Gradle project with the Groovy plugin and we invoked <code>$ gradle --profile build</code>:<br />
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://4.bp.blogspot.com/_-vJw6r2W-bw/TOWZ-RYtrMI/AAAAAAAAEHg/oy1akB42uRk/s1600/Screen+shot+2010-11-18+at+10.19.57+PM.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="284" src="http://4.bp.blogspot.com/_-vJw6r2W-bw/TOWZ-RYtrMI/AAAAAAAAEHg/oy1akB42uRk/s640/Screen+shot+2010-11-18+at+10.19.57+PM.png" width="640" /></a></div
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

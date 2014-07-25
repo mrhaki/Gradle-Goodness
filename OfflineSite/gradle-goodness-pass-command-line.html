@@ -1,0 +1,55 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Pass Command-line Arguments to Build Script</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Pass Command-line Arguments to Build Script</h3>
+
+<div class="post">
+<p>The Gradle command-line parser will add all non-option arguments as tasks to be executed to the build. So if we want to pass an extra argument to our build script via the command-line we must use the option <code>-P</code> or <code>--project-prop</code>. With this option we can set a project property and then use it in the build script.</p>
+<pre class="brush:groovy">
+// File: build.gradle
+task showArgs << {
+    println "$word1 $word2"
+}
+</pre>
+<p>We can run the script:</p>
+<pre class="brush:plain;light:true">
+$ gradle showArgs -Pword1=hello --project-prop word2=world
+:showArgs
+hello world
+
+BUILD SUCCESSFUL
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

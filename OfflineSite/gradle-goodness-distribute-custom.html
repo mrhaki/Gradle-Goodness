@@ -1,0 +1,210 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Distribute Custom Gradle in Our Company</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Distribute Custom Gradle in Our Company</h3>
+
+<div class="post">
+<p>The Gradle wrapper allows us to let developers use Gradle without the need for every developer to install Gradle. We can add the output of the Gradle wrapper task to version control. Developers only need to checkout the source for a project and invoke the <code>gradlew</code> or <code>gradlew.bat</code> scripts. The scripts will look for a Gradle distribution and download it to the local computer of a developer. We can customize the Gradle wrapper and provide a different source for the Gradle distribution. For example we can add the Gradle distribution ZIP file on our company intranet. We then use the <code>distributionUrl</code> property of the <code>Wrapper</code> task to reference the intranet location where we place the Gradle distribution ZIP file.</p><p>In the following sample file we use the <code>distributionUrl</code> property to reference our company intranet:</p><pre class="brush:groovy">task createWrapper(type: Wrapper) {
+    distributionUrl = 'http://intranet/tools/gradle-1.2-bin.zip'
+}
+</pre><p>When we execute the <code>createWrapper</code> task the wrapper script files and supporting files are created in the project directory. It is fine to remove the <code>createWrapper</code> task from the build file. If we want to change the location of the Gradle distribution ZIP file or if the version changes we change the file <code>gradle/wrapper/gradle-wrapper.properties</code>. This file has a key <code>distributionUrl</code>. We can change the value of this key, save the file, add it to version control. If other developers checkout the project the new Gradle distribution location is used and they will use the Gradle version we want them to use.</p><p>In a <a href="http://mrhaki.blogspot.com/2012/10/gradle-goodness-init-script-for-adding.html">previous post</a> we saw an initialization or init script that could be applied for all projects that are developed in our company. To distribute this script we can customize the Gradle distribution, put it on our company intranet and use the Gradle wrapper properties to reference this customized Gradle distribution. It turns out it is very easy to create a customized Gradle distribution with custom init scripts, plugin code, classpath extensions or anything else that can be part of a Gradle distribution. The code in this post is based on the samples from Luke Daley's presentation at SpringOne 2GX 2012. These samples can be found at <a href="https://github.com/gradleware/gradle-talks/tree/master/talks/enterprise-admin/src/demos/10-custom-distribution">Github</a>.</p><p>In the following build file we customize a default Gradle distribution. First the Gradle distribution ZIP file for a specific Gradle version is downloaded. We create a new custom Gradle distribution ZIP file with a custom version number based on the downloaded ZIP file. We add a init script from the <code>src/scripts/init.d</code> directory. We can add also other files like JAR files to the custom Gradle distribution ZIP file. We have applied the base plugin and therefore can use <code>configurations</code>. We also reconfigure the <code>uploadCompanyGradle</code> task so we can use SCP to copy the resulting Gradle ZIP file to our company intranet webserver.</p><pre class="brush:groovy">// Base plugin adds configuration
+// support and build&lt;Configuration&gt; 
+// and upload&lt;Configuration&gt; tasks.
+apply plugin: 'base'
+
+// Version is the version of the
+// company Gradle. This can be independent
+// of the Gradle version.
+version = '1.0.2'
+
+ext {
+    // Gradle version to use as template for 
+    // the custom Gradle distribution.
+    gradleVersion = '1.2'
+}
+
+// Extra configuration to store
+// company Gradle ZIP artifact and
+// use for uploading.
+configurations {
+    companyGradle    
+}
+
+
+task downloadGradle(type: DownloadGradle) {
+    description 'Download Gradle version from Gradle distributions website'
+
+    gradleVersion project.gradleVersion
+    destinationDir file("$buildDir/gradle-downloads")
+}
+
+task companyGradleZip(type: Zip, dependsOn: downloadGradle) {
+    description 'Add extra files to company Gradle distribution'
+
+    // Name for company Gradle ZIP distribution.
+    baseName = 'company-gradle'
+    classifier = 'bin'
+
+    from zipTree(downloadGradle.destinationFile)
+    into("${downloadGradle.distributionNameBase}") {
+        into('init.d') {
+            from "src/scripts/init.d"
+        }
+        // We can do extra stuff here 
+        // to add to the company Gradle
+        // distribution ZIP file.
+    }    
+}
+
+artifacts {
+    companyGradle companyGradleZip
+}
+
+// Configure upload task for company
+// Gradle distribution ZIP.
+uploadCompanyGradle {
+    repositories {
+        // Add SSH resolver to copy the resulting
+        // company Gradle distribution to the 
+        // company webserver.
+        // user and userPassword are defined in external
+        // gradle.properties file.
+        add(new org.apache.ivy.plugins.resolver.SshResolver()) {
+            name = 'company-intranet'           
+            user = intranetUsername         
+            userPassword = intranetPassword
+            host = 'intranet'
+
+            addArtifactPattern "/Library/WebServer/Documents/tools/[artifact]-[revision]-[classifier].[ext]"           
+        }
+    }
+    uploadDescriptor = false
+
+    // We can also use Maven repositories
+    // (or other custom repositories) to upload.
+}
+
+
+class DownloadGradle extends DefaultTask {
+    @Input 
+    String gradleVersion
+    
+    @Input 
+    File destinationDir
+    
+    @Input 
+    String gradleDownloadBase = "http://services.gradle.org/distributions"
+
+    @TaskAction 
+    doDownloadGradle() {
+        destinationFile.bytes = new URL(downloadUrl).bytes
+    }
+
+    String getDownloadUrl() {
+        "$gradleDownloadBase/$downloadFileName"
+    }
+
+    String getDistributionNameBase() {
+        "gradle-$gradleVersion"
+    }
+
+    String getDownloadFileName() {
+        "$distributionNameBase-bin.zip"
+    }
+
+    @OutputFile 
+    File getDestinationFile() {
+        new File(destinationDir, downloadFileName)
+    }
+}
+</pre><p>We create a very simple init script in the directory <code>src/scripts/init.d</code>. This file is added to the <code>init.d</code> directory of our company Gradle distribution. Files in this directory are automatically executed.</p><pre class="brush:groovy">// File: src/scripts/init.d/sample.gradle
+println "You are running the build with the Company Gradle"
+</pre><p>In a project where we want to use the company Gradle distribution we either set the <code>distributionUrl</code> property of the <code>Wrapper</code> task or change the property <code>distributionUrl</code> in the file <code>gradle/wrapper/gradle-wrapper.properties</code>.</p><pre class="brush:plain;highlight:[5]"># File: gradle/wrapper/gradle-wrapper.properties
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+distributionUrl=http://intranet/tools/company-gradle-1.0.2-bin.zip
+</pre><p>When we use the <code>gradlew</code> script for the first time our company Gradle distribution ZIP file is downloaded and extracted. Notice the line "You are running the build with the Company Gradle" in the output from the <code>sample.gradle</code> init script.</p><pre class="brush:plain;light:true;highlight:[24]">$ ./gradlew tasks
+Downloading http://intranet/tools/company-gradle-1.0.2-bin.zip
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+.................................................................................
+....................
+Unzipping /Users/mrhaki/.gradle/wrapper/dists/company-gradle-1.0.2-bin/6scnmmqpv8l6j6f30lud9v9o6o/company-gradle-1.0.2-bin.zip to /Users/mrhaki/.gradle/wrapper/dists/company-gradle-1.0.2-bin/6scnmmqpv8l6j6f30lud9v9o6o
+Set executable permissions for: /Users/mrhaki/.gradle/wrapper/dists/company-gradle-1.0.2-bin/6scnmmqpv8l6j6f30lud9v9o6o/gradle-1.2/bin/gradle
+You are running the build with the Company Gradle
+:tasks
+
+------------------------------------------------------------
+All tasks runnable from root project
+------------------------------------------------------------
+
+Help tasks
+----------
+dependencies - Displays the dependencies of root project 'simple-project'.
+help - Displays a help message
+projects - Displays the sub-projects of root project 'simple-project'.
+properties - Displays the properties of root project 'simple-project'.
+tasks - Displays the tasks runnable from root project 'simple-project' (some of the displayed tasks may belong to subprojects).
+
+Other tasks
+-----------
+wrapper
+
+To see all tasks and more detail, run with --all.
+
+BUILD SUCCESSFUL
+
+Total time: 3.643 secs
+</pre><p>We have seen how easy it is to distribute Gradle in our company. Even customizing the distribution ZIP file is easy to do and will ensure all developers share the same (customized) Gradle version and use the same configuration.</p><p><em>Code written with Gradle 1.2</em></p><p>The code is available at <a href="https://github.com/mrhaki/BlogSamples/tree/master/CustomGradle">Github</a>.</p
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

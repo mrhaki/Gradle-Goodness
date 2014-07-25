@@ -1,0 +1,112 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Getting Announcements from Gradle Build</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Getting Announcements from Gradle Build</h3>
+
+<div class="post">
+<p>We can use the Gradle <code>announce</code> plugin to send announcements from the build process. We can send data to Twitter (I don't know if our followers are waiting for this, but if you want to you can), but also to notification applications on our local computers. For Mac OSX Growl is supported, for Linux notify-send and for Windows Snarl.</p><p>The plugin adds an <code>announce</code> object with the <code>announce()</code> method. The method accepts two arguments. The first argument is the message and the second argument is either <code>twitter</code> or <code>local</code> to indicate where to send the announcement.</p><pre class="brush:groovy">apply plugin: 'announce'
+
+task info {
+    doLast {
+        announce.announce "Running $it.name", 'local'
+        println gradle.gradleVersion
+    }
+}
+</pre><p>Here we see the announcement as Growl message:</p><div class="separator" style="clear: both; text-align: center;"><a href="http://1.bp.blogspot.com/-mHVzq_OpW6M/UG7V5-ed8xI/AAAAAAAAFhw/1IOsoiApVes/s1600/announce1.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="64" width="260" src="http://1.bp.blogspot.com/-mHVzq_OpW6M/UG7V5-ed8xI/AAAAAAAAFhw/1IOsoiApVes/s320/announce1.png" /></a></div><p>We can also get an announcement object for only sending announcement to the local notification applications. We can use a <code>send()</code> method that accepts a title for the announcement as first argument and the message as second argument. To get the local announcement object we invoke <code>announce.local</code>:</p><pre class="brush:groovy">apply plugin: 'announce'
+
+task info {
+    doLast {
+        // Now we can specify a title and message
+        announce.local.send "Gradle Info Task", 'Running'
+        println gradle.gradleVersion
+    }
+}
+</pre><div class="separator" style="clear: both; text-align: center;"><a href="http://2.bp.blogspot.com/-Puhi_0Wn-Gk/UG7V-wBuXxI/AAAAAAAAFh8/oUBo8I2cHQk/s1600/announce3.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="64" width="260" src="http://2.bp.blogspot.com/-Puhi_0Wn-Gk/UG7V-wBuXxI/AAAAAAAAFh8/oUBo8I2cHQk/s320/announce3.png" /></a></div><p>To automatically send out notifications when a task is executed we can implement the <code>TaskExecutionListener</code> interface. From the implementation we can use the <code>announce.local</code> object. In the following example build file we create the class <code>TaskAnnouncer</code> and use the <code>addTaskExecutionListener()</code> method to add it to the <code>TaskExecutionGraph</code> available through <code>gradle.taskGraph</code>:</p><pre class="brush:groovy">apply {
+    plugin 'announce'
+}    
+
+gradle.taskGraph.addTaskExecutionListener new TaskAnnouncer(localAnnouncer: announce.local)
+
+task info {
+    doLast {
+        println gradle.gradleVersion
+    }
+}
+
+class TaskAnnouncer implements TaskExecutionListener {
+    Announcer localAnnouncer
+
+    @Override
+    void afterExecute(final Task task, final TaskState state) {
+        String message
+        if (state.failure) {
+            message = "Failure: $state.failure.message"
+        } else if (state.executed) {
+            message = 'Done'
+        } else if (state.skipped) {
+            message = "Skipped: $state.skipMessage"
+        }
+        send task, message
+    }
+
+    @Override
+    void beforeExecute(final Task task) {
+        send task, 'Ready to run'
+    }
+
+    private void send(final Task task, final String message) {
+        final String title = "Gradle build: $task.project.name:$task.name"
+        localAnnouncer.send title, message
+    }
+}
+</pre><div class="separator" style="clear: both; text-align: center;"><a href="http://1.bp.blogspot.com/-diWJeIDHe2o/UG7WJylNJqI/AAAAAAAAFiI/5bKYYONq8Qg/s1600/announce-double.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="144" width="266" src="http://1.bp.blogspot.com/-diWJeIDHe2o/UG7WJylNJqI/AAAAAAAAFiI/5bKYYONq8Qg/s320/announce-double.png" /></a></div><h2>Automatically announce build results</h2><p>To get the build results after running a build we only have to apply the <code>build-announcements</code> plugin to our Gradle build. This plugin uses the local notification applications to send out a message with a summary of the build. If the build failed we get a message with the task name that failed. For a successful build we can see how many task were executed.</p><pre class="brush:groovy">apply {
+    plugin 'announce'
+    plugin 'build-announcements'
+}    
+
+task info {
+    doLast {
+        println gradle.gradleVersion
+    }
+}
+</pre><p>The following screenshots show the result of a successful and non-successful build:</p><div class="separator" style="clear: both; text-align: center;"><a href="http://2.bp.blogspot.com/-x6lGxHGAZZg/UG7WPA8Jn0I/AAAAAAAAFiU/WVIMA3If3Ww/s1600/announce2.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="65" width="262" src="http://2.bp.blogspot.com/-x6lGxHGAZZg/UG7WPA8Jn0I/AAAAAAAAFiU/WVIMA3If3Ww/s320/announce2.png" /></a></div><div class="separator" style="clear: both; text-align: center;"><a href="http://2.bp.blogspot.com/-A8eo3anfPiM/UG7WgknHrTI/AAAAAAAAFig/dyYHc59qovQ/s1600/announce4.png" imageanchor="1" style="margin-left:1em; margin-right:1em"><img border="0" height="77" width="260" src="http://2.bp.blogspot.com/-A8eo3anfPiM/UG7WgknHrTI/AAAAAAAAFig/dyYHc59qovQ/s320/announce4.png" /></a></div><h2>Apply for all Gradle builds</h2><p>To add the plugins to all Gradle builds on our local computer we can create a so-called init script. Init scripts are executed before a project build script. We can place the init scripts at several locations. Let's create a new init script <code>announce.gradle</code> in our <code>$USER_HOME/.gradle/init.d</code> directory. If we don't have this directory yet, we can create it ourselves. All files in this directory are treated as init scripts by Gradle and are executed automatically. Here is the contents of the <code>announce.gradle</code> script:</p><pre class="brush:groovy">rootProject {
+    apply {
+        plugin 'announce'
+        plugin 'build-announcements'
+    }    
+}
+</pre><br />
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

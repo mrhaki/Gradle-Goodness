@@ -1,0 +1,67 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Get User Input Values From Console</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Get User Input Values From Console</h3>
+
+<div class="post">
+<p>Gradle scripts are Groovy scripts. So we can use all the functionality of Groovy in our Gradle scripts. And because we can use Java classes as well, we can simply get user input values from the console using <code>java.io.Console</code>. With the <code>Console</code> class we can for example ask for a value to be used in our script. We can even ask for a password without the password being echoed on the console.</p>
+<p>In the following sample build script we have a <em>ask</em> task that uses <code>Console</code> to let the user enter a username and password value. In the <em>print</em> task we use the values that are entered to print them to the console.</p>
+<pre class="brush:groovy">
+def username
+def password
+
+task ask << {
+    def console = System.console()
+    if (console) {
+        username = console.readLine('&gt; Please enter your username: ')
+        password = console.readPassword('&gt; Please enter your password: ')
+    } else {
+        logger.error "Cannot get console."
+    }
+}
+
+task print << {
+    println "Hello $username! Your password is ${password.size()} characters."
+}
+</pre>
+<p>We can run the script (suppose we use <em>help</em> as password):</p>
+<pre class="brush:plain">
+$ gradle -q ask print
+&gt; Please enter your username: mrhaki
+&gt; Please enter your password: 
+Hello mrhaki! Your password is 4 characters.
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

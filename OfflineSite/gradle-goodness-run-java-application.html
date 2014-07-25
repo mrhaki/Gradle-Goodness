@@ -1,0 +1,90 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Run Java Application From Build Script</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Run Java Application From Build Script</h3>
+
+<div class="post">
+<p>Gradle has a special task to run a Java class from the build script: <a href="http://www.gradle.org/0.9-rc-1/docs/javadoc/org/gradle/api/tasks/JavaExec.html"><code>org.gradle.api.tasks.JavaExec</code></a>. We can for example create a new task of type <code>JavaExec</code> and use a closure to configure the task. We can set the main class, classpath, arguments, JVM arguments and more to run the application.</p>
+<p>Gradle also has the <code>javaexec()</code> method available as part of a Gradle project. This means we can invoke <code>javaexec()</code> directly from the build script and use the same closure to configure the Java application that we want to invoke.</p>
+<p>Suppose we have a simple Java application:</p>
+<pre class="brush:java">
+// File: src/main/java/com/mrhaki/java/Simple.java
+package com.mrhaki.java;
+
+public class Simple {
+
+    public static void main(String[] args) {
+        System.out.println(System.getProperty("simple.message") + args[0] + " from Simple.");
+    }
+
+}
+</pre>
+<p>And we have the following Gradle build file to run <code>Simple</code>:</p>
+<pre class="brush:groovy">
+// File: build.gradle
+apply plugin: 'java'
+
+task(runSimple, dependsOn: 'classes', type: JavaExec) {
+    main = 'com.mrhaki.java.Simple'
+    classpath = sourceSets.main.runtimeClasspath
+    args 'mrhaki'
+    systemProperty 'simple.message', 'Hello '
+}
+
+defaultTasks 'runSimple'
+
+// javaexec() method also available for direct invocation
+// javaexec {
+//    main = 'com.mrhaki.java.Simple'
+//    classpath = sourceSets.main.runtimeClasspath
+//    args 'mrhaki'
+//    systemProperty 'simple.message', 'Hello '
+// }
+</pre>
+<p>We can execute our Gradle build script and get the following output:</p>
+<pre class="brush:plain">
+$ gradle
+:compileJava
+:processResources
+:classes
+:runSimple
+Hello mrhaki from Simple.
+
+BUILD SUCCESSFUL
+
+Total time: 4.525 secs
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

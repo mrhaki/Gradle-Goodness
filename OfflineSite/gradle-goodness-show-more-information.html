@@ -1,0 +1,170 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Show More Information About Failed Tests</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Show More Information About Failed Tests</h3>
+
+<div class="post">
+<p>Running tests in Gradle is easy. Normally if one of the tests fails the build fails as well. But we don't see immediately in the command-line output why a test fails. We must first open the generated HTML test report. But there are other ways as well.</p><p>First we create the following sample Gradle build file:</p><pre class="brush:groovy">// File: build.gradle
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile 'junit:junit:[4,)'
+}
+</pre><p>And we use the following sample JUnit test class. Notice this test will always fail, which is what we want in this case.</p><pre class="brush:java">// File: src/test/java/com/mrhaki/gradle/SampleTest.java
+package com.mrhaki.gradle;
+
+import org.junit.*;
+
+public class SampleTest {
+
+    @Test public void sample() {
+        Assert.assertEquals("Gradle is gr8", "Gradle is great");
+    }
+    
+}
+</pre><p>To run our test we execute the <code>test</code> task. If we run the task we see in the output on which line the test fails, but we don't see the assertion why it went wrong:</p><pre class="brush:plain;highlight:[9,10]">$ gradle test
+:compileJava UP-TO-DATE
+:processResources UP-TO-DATE
+:classes UP-TO-DATE
+:compileTestJava
+:processTestResources UP-TO-DATE
+:testClasses
+:test
+
+com.mrhaki.gradle.SampleTest > sample FAILED
+    org.junit.ComparisonFailure at SampleTest.java:8
+
+1 test completed, 1 failed
+:test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+> There were failing tests. See the report at: file:///Users/mrhaki/Projects/mrhaki.com/blog/posts/samples/gradle/testlogging/build/reports/tests/index.html
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+
+BUILD FAILED
+
+Total time: 4.904 secs
+</pre><p>We can run the <code>test</code> task again, but now set the Gradle logging level to info with the command-line option <code>-i</code> or <code>--info</code>. Now we get the assertion about what went wrong in the output:</p><pre class="brush:plain;highlight:[9,10,11,12,13]">$ gradle test -i
+Starting Build
+Settings evaluated using empty settings script.
+Projects loaded. Root project using build file 
+...
+Successfully started process 'Gradle Worker 1'
+Gradle Worker 1 executing tests.
+Gradle Worker 1 finished executing tests.
+
+com.mrhaki.gradle.SampleTest &gt; sample FAILED
+    org.junit.ComparisonFailure: expected:&lt;gradle is gr[8]&gt; but was:&lt;gradle is gr[eat]&gt;
+        at org.junit.Assert.assertEquals(Assert.java:115)
+        at org.junit.Assert.assertEquals(Assert.java:144)
+        at com.mrhaki.gradle.SampleTest.sample(SampleTest.java:8)
+Process 'Gradle Worker 1' finished with exit value 0 (state: SUCCEEDED)
+
+1 test completed, 1 failed
+Finished generating test XML results (0.025 secs)
+Generating HTML test report...
+Finished generating test html results (0.027 secs)
+:test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+&gt; There were failing tests. See the report at: file:///Users/mrhaki/Projects/mrhaki.com/blog/posts/samples/gradle/testlogging/build/reports/tests/index.html
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --debug option to get more log output.
+
+BUILD FAILED
+
+Total time: 5.117 secs
+</pre><p>But this still generates a lot of noise. It is better to customize the test logging by configuring the <code>test</code> task. We can configure the logging on different levels. To get the information about the failure we want we only have to change the <code>exceptionFormat</code> property and set the value to <code>full</code>. Our Gradle build file now looks like this:</p><pre class="brush:groovy;highlight:[13]">// File: build.gradle
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile 'junit:junit:[4,)'
+}
+
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}
+</pre><p>We can re-run the <code>test</code> task and use the normal logging level, but this time we also get the reason why our test fails, without the extra noise:</p><pre class="brush:plain;highlight:[9,10,11,12,13]">$ gradle test
+:compileJava UP-TO-DATE
+:processResources UP-TO-DATE
+:classes UP-TO-DATE
+:compileTestJava UP-TO-DATE
+:processTestResources UP-TO-DATE
+:testClasses UP-TO-DATE
+:test
+
+com.mrhaki.gradle.SampleTest &gt; sample FAILED
+    org.junit.ComparisonFailure: expected:&lt;gradle is gr[8]&gt; but was:&lt;gradle is gr[eat]&gt;
+        at org.junit.Assert.assertEquals(Assert.java:115)
+        at org.junit.Assert.assertEquals(Assert.java:144)
+        at com.mrhaki.gradle.SampleTest.sample(SampleTest.java:8)
+
+1 test completed, 1 failed
+:test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+&gt; There were failing tests. See the report at: file:///Users/mrhaki/Projects/mrhaki.com/blog/posts/samples/gradle/testlogging/build/reports/tests/index.html
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output.
+
+BUILD FAILED
+
+Total time: 5.906 secs
+</pre><p>Sample written with Gradle 1.6</p
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

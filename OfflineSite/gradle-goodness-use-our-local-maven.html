@@ -1,0 +1,77 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Use Our Local Maven Repo with Gradle</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Use Our Local Maven Repo with Gradle</h3>
+
+<div class="post">
+<p>Usually when we work on a software component or library we package the files into a JAR file. If we use Maven we run the <code>$ mvn install</code> command to copy the JAR artifact into our local Maven repository, so we can use the component or library in other project on our local machine. We can do the same thing with Gradle, we run <code>$ gradle install</code> to copy the artifact into the local Maven repository. The only thing we need to do is use the Maven plugin in our project. Gradle knows the location of our Maven repository, because Gradle uses the Maven ANT tasks to implement the install task.</p>
+<p>To use the local Maven repository in our Gradle projects for dependency resolution we must do something extra. The local Maven repository is not added to the repositories list of our project automatically, we must do this ourselves. In our <code>build.gradle</code> file we define a new Maven repository and point it to our local Maven repository. Now Gradle uses this repository to look for dependencies just like Maven does.</p>
+<pre class="brush:groovy">
+// File: build.gradle
+usePlugin 'java'  // Java plugin to build our JAR artifact.
+usePlugin 'maven'  // Maven plugin to install artifact in local Maven repo.
+
+def localMavenRepo = 'file://' + new File(System.getProperty('user.home'), '.m2/repository').absolutePath
+repositories {
+    // Use local Maven repo location. We don't need this if we only want to install
+    // an artifact, but we do need it if we want to use dependencies from the local
+    // repository.
+    mavenRepo urls: localMavenRepo
+}
+
+// Project configuration:
+version = '1.0-SNAPSHOT'
+group = 'com.mrhaki.gradle'
+
+// The following line is not necessary. Default the install tasks depends on the
+// jar task, but this means no tests and checks are executed when we use the
+// install task. The following line makes the install tasks depend on the build task
+// and now all tests and checks are done before install is executed.
+install.dependsOn ':build'
+</pre>
+<p>To deploy our artifact to the Maven local repository we run the install command. If we use the <code>-i</code> argument to get extra information we see at the end where Gradle is installing the JAR file.</p>
+<pre class="brush:plain;light:true">
+$ gradle install -i
+...
+Tasks to be executed: [task: ':compileJava', task: ':processResources', task: ':classes', task: ':jar', task: ':assemble', task: ':compileTestJava', task: ':processTestResources', task: ':testClasses', task: ':test', task: ':check', task: ':build', task: ':install']
+...
+[INFO] Installing .../build/libs/project-1.0-SNAPSHOT.jar to .../.m2/repository/com/mrhaki/gradle/project/1.0-SNAPSHOT/project-1.0-SNAPSHOT.jar
+
+BUILD SUCCESSFUL
+
+Total time: 2.625 secs
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

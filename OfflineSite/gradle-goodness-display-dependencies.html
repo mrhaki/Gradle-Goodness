@@ -1,0 +1,230 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Display Dependencies for a Gradle Build</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Display Dependencies for a Gradle Build</h3>
+
+<div class="post">
+<p>We can see the dependencies defined in our project by using the <code>-n</code> or <code>--dependencies</code> argument. We get an overview of the dependencies for each configuration in our Gradle build.</p>
+<pre class="brush:groovy">
+// File: build.gradle
+usePlugin 'java'
+
+repositories { 
+    mavenCentral() 
+}
+
+dependencies {
+    compile 'org.springframework:spring-webmvc:2.5.6'
+}
+</pre>
+<pre class="brush:plain;light:true">
+$ gradle -n
+:reportTask
+
+------------------------------------------------------------
+Root Project
+------------------------------------------------------------
+archives - Configuration for the default artifacts.
+compile - Classpath for compiling the sources.
+|-----org.springframework:spring-webmvc:2.5.6:default
+default - Configuration the default artifacts and its dependencies.
+|-----org.springframework:spring-webmvc:2.5.6:default
+      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |-----org.springframework:spring-context:2.5.6:compile,runtime,master
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |-----org.springframework:spring-web:2.5.6:master,runtime,compile
+      |      |-----org.springframework:spring-context:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |-----org.springframework:spring-context-support:2.5.6:compile,runtime,master
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-context:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+runtime - Classpath for running the compiled sources.
+|-----org.springframework:spring-webmvc:2.5.6:default
+      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |-----org.springframework:spring-context:2.5.6:compile,runtime,master
+      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |-----org.springframework:spring-context-support:2.5.6:compile,runtime,master
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-context:2.5.6:compile,runtime,master
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |-----org.springframework:spring-web:2.5.6:master,runtime,compile
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-context:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+testCompile - Classpath for compiling the test sources.
+|-----org.springframework:spring-webmvc:2.5.6:default
+testRuntime - Classpath for running the test sources.
+|-----org.springframework:spring-webmvc:2.5.6:default
+      |-----org.springframework:spring-context:2.5.6:compile,runtime,master
+      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |-----org.springframework:spring-context-support:2.5.6:compile,runtime,master
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-context:2.5.6:compile,runtime,master
+      |      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |-----org.springframework:spring-web:2.5.6:master,runtime,compile
+      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-context:2.5.6:compile,runtime,master
+      |      |      |-----org.springframework:spring-beans:2.5.6:master,compile,runtime
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----aopalliance:aopalliance:1.0:runtime,master,compile
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----org.springframework:spring-core:2.5.6:compile,runtime,master
+      |      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+      |      |-----commons-logging:commons-logging:1.1.1:master,compile,runtime
+
+BUILD SUCCESSFUL
+
+Total time: 7.359 secs
+</pre>
+<p>Another way is to add the plugin <em>project-reports</em> to our project. We now get the the task <em>dependencyReport</em> in our project. When we run <code>$ gradle dependencyReport</code> we get a text file <code>build/reports/project/dependencies.txt</code> with the same overview of the dependencies.</p
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

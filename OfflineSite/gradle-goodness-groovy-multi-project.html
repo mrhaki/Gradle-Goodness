@@ -1,0 +1,218 @@
+<html>
+<head>
+
+<title>Gradle Goodness: A Groovy Multi-project with Gradle</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: A Groovy Multi-project with Gradle</h3>
+
+<div class="post">
+<p>Gradle is a flexible build system that uses Groovy for build scripts. In this post we create a very simple application demonstrating a multi-project build. We create a Groovy web application with very simple domain, dataaccess, services and web projects. The sample is not to demonstrate Groovy but to show the multi-project build support in Gradle.</p>
+<p>We start by creating a new application directory <code>app</code> and create two files <code>settings.gradle</code> and <code>build.gradle</code>:</p>
+<pre class="brush:shell">
+$ mkdir app
+$ cd app
+$ touch settings.gradle
+$ touch build.gradle
+</pre>
+<p>We open the file <code>settings.gradle</code> in a text editor. With the <code>include</code> method we define the subprojects for the application:</p>
+<pre class="brush:groovy">
+include 'domain', 'dataaccess', 'services', 'web'
+</pre>
+<p>Next we open <code>build.gradle</code> in the text editor. This build file is our main build file for the application. We can define all settings for the subprojects in this file:</p>
+<pre class="brush:groovy">
+subprojects {
+    usePlugin 'groovy'
+    version = '1.0.0-SNAPSHOT'
+    group = 'com.mrhaki.blog'
+    configurations.compile.transitive = true  // Make sure transitive project dependencies are resolved.
+    
+    repositories {
+        mavenCentral()
+    }
+    
+    dependencies {
+        groovy 'org.codehaus.groovy:groovy:1.6.5'
+    }
+    
+    task initProject(description: 'Initialize project') &lt;&lt; { task -&gt;
+        task.project.sourceSets.all.groovy.srcDirs*.each { 
+            println "Create $it"
+            it.mkdirs() 
+        }
+    }
+}
+
+project(':dataaccess') {
+    dependencies {
+        compile project(':domain')
+    }
+}
+
+project(':services') {
+    dependencies {
+        compile project(':dataaccess')
+    }
+}
+
+project(':web') {
+    usePlugin 'jetty'  // jetty plugin extends war plugin, so we get all war plugin functionality as well.
+    
+    dependencies {
+        compile project(':services')  // Because configurations.compile.transitive = true we only have to specify services project, although we also reference dataaccess and domain projects.
+    }
+    
+    // Add extra code to initProject task.
+    initProject &lt;&lt; { task -&gt;
+        def webInfDir = new File(task.project.webAppDir, '/WEB-INF')
+        println "Create $webInfDir"
+        webInfDir.mkdirs()
+    }
+}
+</pre>
+<p>The <code>subprojects</code> method accepts a closure and here we define common settings for all subprojects. The <code>project</code> method allows us to fine tune the definiton of a subproject.  For each project we define project dependencies between the different projects for the compile configuration. This is a very powerful feature of Gradle, we define the project dependency and Gradle will make sure the dependent project is first build before the project that needs it. This even works if we invoke a build command from a subproject. For example if we run <code>gradle build</code> from the <code>web</code> project, all dependent projects are build first.</p>
+<p>We also create a new task <em>initProject</em> for all subprojects. This task creates the Groovy source directories. In the <code>web</code> project we add an extra statement to the task to create the <code>src/main/webapp/WEB-INF</code> directory. This shows we can change a task definition in a specific subproject.</p>
+<p>Okay it is time to let Gradle create our directories: <code>$ gradle initProject</code>. After the script is finished we have a new directory structure:</p>
+<a onblur="try {parent.deselectBloggerImageGracefully();} catch(e) {}" href="http://4.bp.blogspot.com/_-vJw6r2W-bw/SvxlyZp0gfI/AAAAAAAADFc/AdQj9YO6zlo/s1600-h/blog-gradle-multi1.png"><img style="display:block; margin:0px auto 10px; text-align:center;cursor:pointer; cursor:hand;width: 145px; height: 320px;" src="http://4.bp.blogspot.com/_-vJw6r2W-bw/SvxlyZp0gfI/AAAAAAAADFc/AdQj9YO6zlo/s320/blog-gradle-multi1.png" border="0" alt=""id="BLOGGER_PHOTO_ID_5403305569491911154" /></a>
+<p>It is time to add some files to the different projects. As promised we keep it very, very simple. We define a domain class <code>Language</code>, a class in dataaccess to get a list of <code>Language</code> objects, a services class to filter out the Groovy language and a web component to get the name property for the <code>Language</code> object and a Groovlet to show it in the web browser. Finally we add a <code>web.xml</code> so we can execute the Groovlet.</p>
+<pre class="brush:groovy">
+// File: app/domain/src/main/groovy/com/mrhaki/blog/domain/Language.groovy
+package com.mrhaki.blog.domain
+
+class Language {
+    String name
+}
+</pre>
+<pre class="brush:groovy">
+// File: app/dataaccess/src/main/groovy/com/mrhaki/blog/data/LanguageDao.groovy
+package com.mrhaki.blog.data
+
+import com.mrhaki.blog.domain.Language
+
+class LanguageDao {
+    List findAll() {
+        [new Language(name: 'Java'), new Language(name: 'Groovy'), new Language(name: 'Scala')]
+    }
+}
+</pre>
+<pre class="brush:groovy">
+// File: app/services/src/main/groovy/com/mrhaki/blog/service/LanguageService.groovy
+package com.mrhaki.blog.service
+
+import com.mrhaki.blog.domain.Language
+import com.mrhaki.blog.data.LanguageDao
+
+class LanguageService {
+    def dao = new LanguageDao()
+    
+    Language findGroovy() {
+       dao.findAll().find { it.name == 'Groovy' }
+    }
+}
+</pre>
+<pre class="brush:groovy">
+// File: app/web/src/main/groovy/com/mrhaki/blog/web/LanguageHelper.groovy
+package com.mrhaki.blog.web
+
+import com.mrhaki.blog.service.LanguageService
+
+class LanguageHelper {
+    def service = new LanguageService()
+    
+    String getGroovyValue() {
+        service.findGroovy()?.name ?: 'Groovy language not found'
+    }
+}
+</pre>
+<pre class="brush:groovy">
+// File: app/web/src/main/webapp/language.groovy
+import com.mrhaki.blog.web.LanguageHelper
+
+def helper = new LanguageHelper()
+
+html.html {
+    head {
+        title "Simple page"
+    }
+    body {
+        h1 "Simple page"
+        p "My favorite language is '$helper.groovyValue'."
+    }
+}
+</pre>
+<pre class="brush:groovy">
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!-- File: app/web/src/main/webapp/WEB-INF/web.xml --&gt;
+&lt;web-app&gt;
+    &lt;servlet&gt;
+        &lt;servlet-name&gt;Groovy&lt;/servlet-name&gt;
+        &lt;servlet-class&gt;groovy.servlet.GroovyServlet&lt;/servlet-class&gt;
+    &lt;/servlet&gt;
+    &lt;servlet-mapping&gt;
+        &lt;servlet-name&gt;Groovy&lt;/servlet-name&gt;
+        &lt;url-pattern&gt;*.groovy&lt;/url-pattern&gt;
+    &lt;/servlet-mapping&gt;
+&lt;/web-app&gt;
+</pre>
+<p>We have created all the files and it is time to see the result. Thanks to the Jetty plugin we only have to invoke the <em>jettyRun</em> tasks and all files (and dependent projects) are compiled and processed:</p>
+<pre class="brush:shell;light:true">
+$ cd web
+$ gradle jettyRun
+:domain:compileJava
+:domain:compileGroovy
+:domain:processResources
+:domain:classes
+:domain:jar
+:domain:uploadDefaultInternal
+:dataaccess:compileJava
+:dataaccess:compileGroovy
+:dataaccess:processResources
+:dataaccess:classes
+:dataaccess:jar
+:dataaccess:uploadDefaultInternal
+:services:compileJava
+:services:compileGroovy
+:services:processResources
+:services:classes
+:services:jar
+:services:uploadDefaultInternal
+:web:compileJava
+:web:compileGroovy
+:web:processResources
+:web:classes
+:web:jettyRun
+</pre>
+<p>We open a web browser and go to <em>http://localhost:8080/web/language.groovy</em> and get a simple web page with the results of all our labour:</p>
+<a onblur="try {parent.deselectBloggerImageGracefully();} catch(e) {}" href="http://2.bp.blogspot.com/_-vJw6r2W-bw/SvxlygpFufI/AAAAAAAADFk/OwOIcEEvvWA/s1600-h/blog-gradle-mutli2.png"><img style="display:block; margin:0px auto 10px; text-align:center;cursor:pointer; cursor:hand;width: 320px; height: 162px;" src="http://2.bp.blogspot.com/_-vJw6r2W-bw/SvxlygpFufI/AAAAAAAADFk/OwOIcEEvvWA/s320/blog-gradle-mutli2.png" border="0" alt=""id="BLOGGER_PHOTO_ID_5403305571367893490" /></a>
+<p>This concludes this blog about the multi-project support of Gradle. What we need to remember is Gradle is great in resolving dependencies between projects. If one project dependents on another we don't have to worry about first compiling the dependent project, Gradle does this for us. We can define tasks for each project, but still fine tune a task for a specific project. Also we  have a certain freedom about the project structure, as long as we define the needed projects in the <code>settings.gradle</code> all will be fine. Also we only need one <code>build.gradle</code> (but can be more per project if we want) to configure all projects.</p
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

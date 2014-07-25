@@ -1,0 +1,51 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Setting Default Tasks</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Setting Default Tasks</h3>
+
+<div class="post">
+<p>To run a task with Gradle we must specify the task name as an argument. If we don't specify a task name we get an error that Gradle cannot determine a task to execute. We can define the tasks that need to be executed when we don't specify a task name explicitly. In a Gradle build script we invoke the method <code>defaultTasks</code> and pass the name or names of the tasks as arguments to the method. These tasks are executed when we run Gradle without any task name. When we run <code>$ gradle -t</code> or <code>$ gradle --tasks</code> we can see which tasks are the default tasks.</p>
+<pre class="brush:groovy">
+// File: build.gradle
+usePlugin 'java'
+
+defaultTasks 'clean', 'build'  // Run tasks clean and build if no task is specified.
+</pre>
+<pre class="brush:plain;light:true">
+$ gradle --tasks | grep "Default Tasks"
+Default Tasks: clean, build
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

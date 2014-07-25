@@ -1,0 +1,63 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Create JAR Artifact with Test Code for Java Project</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Create JAR Artifact with Test Code for Java Project</h3>
+
+<div class="post">
+<p>Today, during my Gradle session, someone asked how to create a JAR file with the compiled test classes and test resources. I couldn't get the task syntax right at that moment, so when I was at home I had to find out how we can create that JAR file. And it turned out to be very simple:</p>
+<pre class="brush:groovy">
+apply plugin: 'java'
+
+task testJar(type: Jar) {
+    classifier = 'tests'
+    from sourceSets.test.classes
+}
+</pre>
+<p>The magic is in the <code>from</code> method where we use <code>sourceSets.test.classes</code>. Because we use <code>sourceSets.test.classes</code> Gradle knows the task <code>testClasses</code> needs to be executed first before the JAR file can be created. And of course the <code>assemble</code> task will pick up this new task of type Jar automatically.</p>
+<p>When we run the build we get the following output:</p>
+<pre class="brush:plain;light:true">
+$ gradle assemble
+:compileJava
+:processResources
+:classes
+:jar
+:compileTestJava
+:processTestResources
+:testClasses
+:testJar
+:assemble
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

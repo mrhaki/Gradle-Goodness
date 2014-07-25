@@ -1,0 +1,138 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Working with Live Task Collection</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Working with Live Task Collection</h3>
+
+<div class="post">
+<p>Gradle support the definition of so called live collections. These collections are mostly created based on criteria like with a <code>filter()</code> or <code>matching()</code> method. The collection content can change if the content of the source collection changes. For example the <code>org.gradle.api.DomainObjectCollection</code> interface has a <code>matching</code> method that returns a live collection. The list of tasks in a project implements this interface so we can have a live collection of tasks that match a certain criteria.</p><p>The nice thing about the live collection of tasks is that we can add tasks to the project after we have defined the task collection and they will be included in the collection. Normally if we would access the list of tasks in a project and use for example a <code>findAll</code> method than the returned list of tasks will not change. So if we add a new task to the project it will not be added to the list of task that apply to the condition of the <code>findAll</code> method.</p><p>Now if we use the <code>matching()</code> method on a list of tasks the result will be a live list of tasks. Even if we add tasks to the project after the definition of the list of tasks, they will be added to the collection.</p><p>Let's see the following Gradle build file that defines the tasks <code>allCompile</code> and <code>allCopy</code>. Each task has dependencies on other tasks. We use the <code>dependsOn()</code> method of a task to set those dependencies. The <code>dependsOn()</code> method accepts a collection of other tasks. For the <code>allCompile</code> task we don't use a live collection and for the <code>allCopy</code> task we use a live collection.</p><pre class="brush:groovy">task allCompile << {
+    println 'All is compiled.'
+}
+allCompile.dependsOn project.tasks.findAll {
+    it.name.startsWith('compile')
+}
+
+task allCopy << {
+    println 'Everything is copied.'
+}
+// Set dependencies with live collection of tasks.
+allCopy.dependsOn project.tasks.matching {
+    it.name.startsWith('copy')
+}
+
+// Add dependency tasks.
+5.times {
+    // Dependencies for compileAll task.
+    task "compile${it}" << { println 'Compile the code.' }
+
+    // Dependencies for copyAll task.
+    task "copy${it}" << { println 'Copy something.' }
+}
+</pre>
+<p>If we run the build script we get the following output:</p><pre class="brush:plain;light:true">$ gradle allCompile allCopy
+:allCompile
+All is compiled.
+:copy0
+Copy something.
+:copy1
+Copy something.
+:copy2
+Copy something.
+:copy3
+Copy something.
+:copy4
+Copy something.
+:allCopy
+Everything is copied.
+
+BUILD SUCCESSFUL
+
+Total time: 2.232 secs
+</pre><p>We notice the <code>allCompile</code> tasks doesn't have any dependencies, because those task dependencies didn't exist when we used the <code>dependsOn()</code> method. The <code>allCopy</code> task has all task dependencies even though we created them later in the build script.</p><p>Bonus: we can use the <code>findAll</code> method to look for task dependencies, but we have to let Gradle evaluate this condition in a closure. So we can change our build script and use a closure with the <code>dependsOn()</code> method. Gradle will invoke the closure at execution time and not a configuration time. The dependencies tasks are then available and assigned as dependencies to the <code>allCompile</code> task:</p><pre class="brush:groovy">task allCompile << {
+    println 'All is compiled.'
+}
+// Use closure for resolving task dependencies.
+allCompile.dependsOn {
+    project.tasks.findAll {
+        it.name.startsWith('compile')
+    }
+}
+
+task allCopy << {
+    println 'Everything is copied.'
+}
+// Set dependencies with live collection of tasks.
+allCopy.dependsOn project.tasks.matching {
+    it.name.startsWith('copy')
+}
+
+// Add dependency tasks.
+5.times {
+    // Dependencies for compileAll task.
+    task "compile${it}" << { println 'Compile the code.' }
+
+    // Dependencies for copyAll task.
+    task "copy${it}" << { println 'Copy something.' }
+}</pre>
+<p>If we invoke both tasks with Gradle we get the following output:</p><pre class="brush:plain;light:true">:compile0
+Compile the code.
+:compile1
+Compile the code.
+:compile2
+Compile the code.
+:compile3
+Compile the code.
+:compile4
+Compile the code.
+:allCompile
+All is compiled.
+:copy0
+Copy something.
+:copy1
+Copy something.
+:copy2
+Copy something.
+:copy3
+Copy something.
+:copy4
+Copy something.
+:allCopy
+Everything is copied.
+
+BUILD SUCCESSFUL
+
+Total time: 2.258 secs
+</pre><p>This blog post is based on Gradle version 1.0-rc-3</p
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

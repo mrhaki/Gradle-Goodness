@@ -1,0 +1,64 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Changing the Project Name</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Changing the Project Name</h3>
+
+<div class="post">
+<p>By default the name of our Gradle project is the name of the directory the project is created in. We can check this by running the following command:</p>
+<pre class="brush:shell;light:true">
+$ gradle -r | grep name
+name: project
+</pre>
+<p>The first place we think of to change the project name is <code>build.gradle</code>, because that is also the file we can change for example the version property of our project:</p>
+<pre class="brush:groovy;light:true">
+name = 'newProjectName'
+</pre>
+<p>When we run gradle we get an error:</p>
+<pre class="brush:plain;light:true">
+* What went wrong:
+A problem occurred evaluating root project 'project'.
+Cause: Cannot set the value of read-only property 'name' on root project 'project'.
+</pre>
+<p>So what can we do? We must create a file <code>settings.gradle</code> and set the property <code>rootProject.name</code>:</p>
+<pre class="brush:groovy;light:true">
+rootProject.name = 'newProjectName'
+</pre>
+<p>We can check the name of our project has changed by running the following command again:</p>
+<pre class="brush:shell;light:true">
+$ gradle -r | grep name
+name: newProjectName
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

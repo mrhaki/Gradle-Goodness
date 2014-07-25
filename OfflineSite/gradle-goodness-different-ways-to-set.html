@@ -1,0 +1,83 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Different Ways to Set Project Properties</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Different Ways to Set Project Properties</h3>
+
+<div class="post">
+<p>We can add properties to our Gradle build script in several different ways.</p>
+<style>
+ul.list { margin-left: 16px; }
+ul.list li { list-style-type: disc; padding-left: 12px; }
+</style>
+<ul class="list" style="list-style-type: disc;">
+<li>First of all we can define the properties in the script itself.</li>
+<li>Or we can use the <code>-P</code> command-line argument to pass a property to the build script.</li>
+<li>We can define a <code>gradle.properties</code> file and set the property in this file. We can place the file in our project directory or in the <code>&lt;USER_HOME&gt;/.gradle</code> directory. The properties defined in the property file in our home directory take precedence over the properties defined in the file in our project directory. As a bonus we can also define system properties in a <code>gradle.properties</code> file, we only have to prefix the property name with <code>systemProp.</code>.</li>
+<li>We can use an environment variable of which the name starts with <code>ORG_GRADLE_PROJECT_</code> followed by the property name.</li>
+<li>Or we use the Java system property that starts with <code>org.gradle.project.</code> followed by the property name.</li>
+</ul>
+<p>&nbsp;</p>
+<p>The following sample Gradle build file uses all these techniques to get the value of properties:</p>
+<pre class="brush:groovy">
+description = '''\
+To run this build script we must first 
+set an environment variable 
+ORG_GRADLE_PROJECT_property5=environment property
+
+Run as: 
+gradle -Property4="argument property" -Dorg.gradle.project.property6="system property"
+'''
+
+property1 = 'Project property'
+
+task assertProps << {
+ description: 'Print different properties'
+ assert 'Project property' == property1
+ assert 'gradle.properties property' == property2
+ assert 'argument property' == property4
+ assert 'environment property' == property5
+ assert 'system property' == property6
+ assert 'gradle.properties system property' == System.properties['property3']
+}
+
+defaultTasks 'assertProps'
+</pre>
+<p>We use the following <code>gradle.properties</code> file:</p>
+<pre class="brush:plain">
+property2 = gradle.properties property
+systemProp.property3 = gradle.properties system property
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,77 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Use Groovy Ruleset File with Code Quality Plugin</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Use Groovy Ruleset File with Code Quality Plugin</h3>
+
+<div class="post">
+<p>The <a href="http://www.gradle.org/code_quality_plugin.html">code-quality</a> plugin supports <a href="http://codenarc.sourceforge.net">CodeNarc</a> for Groovy projects. The default configuration file is XML based with the name <code>codenarc.xml</code> and must be placed in the directory <code>config/codenarc</code>. But CodeNarc also supports a Groovy DSL for writing configuration files. Suppose we have a configuration file with the name <code>rules.groovy</code> and we put it in the directory <code>config/codenarc</code>. In our <code>build.gradle</code> file we reference this file with the property <code>codeNarcConfigFileName</code>. The code-quality plugin will pass this value on to CodeNarc and the rules defined in our Groovy ruleset file are used.</p>
+<pre class="brush:groovy">
+// File: config/codenarc/rules.groovy
+
+ruleset {
+    description 'Rules Sample Groovy Gradle Project'
+
+    ruleset('rulesets/basic.xml')
+    ruleset('rulesets/braces.xml')
+    ruleset('rulesets/exceptions.xml')
+    ruleset('rulesets/imports.xml')
+    ruleset('rulesets/logging.xml') {
+        'Println' priority: 1
+        'PrintStackTrace' priority: 1
+    }
+    ruleset('rulesets/naming.xml')
+    ruleset('rulesets/unnecessary.xml')
+    ruleset('rulesets/unused.xml')
+}
+</pre>
+<p></p>
+<pre class="brush:groovy;highlight:[13]">
+// File: build.gradle
+['groovy', 'code-quality'].each { 
+    apply plugin: it 
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    groovy group: 'org.codehaus.groovy', name: 'groovy', version: '1.7.6'
+}
+
+codeNarcConfigFileName = 'config/codenarc/rules.groovy'
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

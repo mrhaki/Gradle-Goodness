@@ -1,0 +1,54 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Don't Let CodeNarc Violations Fail the Build</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Don't Let CodeNarc Violations Fail the Build</h3>
+
+<div class="post">
+<p>With the code-quality plugin for Groovy project we use <a href="http://codenarc.sourceforge.net">CodeNarc</a> to check our code. By default we are not allowed to have any violations in our code, because if there is a violation the Gradle build will stop with a failure. If we don't want to our build to fail, because of code violations, we can set the property <code>ignoreFailures</code> to <code>true</code> for the CodeNarc task.</p><p>The code-quality plugin adds two CodeNarc tasks to our project: codenarcMain and codenarcTest. We can simply set the property <code>ignoreFailures</code> for these tasks:</p>
+<pre class="brush:groovy">
+apply plugin: 'code-quality'
+
+[codenarcMain, codenarcTest]*.ignoreFailures = true
+</pre>
+<p>We can also search for all tasks of type CodeNarc and set the <code>ignoreFailures</code> property. This is useful if we added new tasks of type CodeNarc to our project and want to change the property of all these tasks:</p>
+<pre class="brush:groovy">
+apply plugin: 'code-quality'
+
+tasks.withType(CodeNarc).allTasks { codeNarcTask ->
+    codeNarcTask.ignoreFailures = true
+}
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Task Output Annotations Create Directory Automatically</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Task Output Annotations Create Directory Automatically</h3>
+
+<div class="post">
+<p>One of the great features of Gradle is incremental build support. With incremental build support a task is only executed if it is really necessary. For example if a task generates files and the files have not changed than Gradle can skip the task. This speeds up the build process, which is good. If we write our own tasks we can use annotations for properties and methods to make them behave correctly for incremental build support. The <code>@OutputDirectory</code> annotation for example can be used for a property or method that defines a directory that is used by the task to put files in. The nice thing is that once we have designated such a directory as the output directory we don't have to write code to create the directory if it doesn't exist. Gradle will automatically create the directory if it doesn't exist yet. If we use the <code>@OutputFile</code> or <code>@OutputFiles</code> annotation the directory part of the file name is created if it doesn't exist.</p><p>In the following example build file we create a new task <em>SplitXmlTask</em> with the property <code>destinationDir</code> and we apply the <code>@OutputDirectory</code> annotation. If the directory doesn't exist Gradle will create it when we execute the task.</p><pre class="brush:groovy">task splitNames(type: SplitXmlTask) {
+    xmlSource = file('src/xml/names.xml')
+    destinationDir = file("$buildDir/splitter/names")
+    splitOn = 'person'
+}
+
+defaultTasks 'splitNames'
+
+class SplitXmlTask extends DefaultTask {
+    @Input
+    String splitOn
+
+    @InputFile
+    File xmlSource
+
+    // Output directory, will be created
+    // automatically if it doesn't exist yet.
+    @OutputDirectory
+    File destinationDir
+
+    @TaskAction
+    def splitXml() {
+        def slurper = new XmlParser().parse(xmlSource)
+
+        // Find all nodes where the tag name
+        // equals the value for splitOn.
+        // For each node we create a new file in 
+        // the destinationDir directory with the 
+        // complete XML node as contents.
+        slurper.'**'.findAll { it.name() == splitOn }.each { node -&gt;
+            def outputFile = new File(destinationDir, "${node.name.text()}.xml")
+            outputFile.withPrintWriter { writer -&gt;
+                writer.println '&lt;?xml version="1.0"?&gt;'
+                new XmlNodePrinter(writer).print(node)
+            }
+        }
+    }
+}
+</pre><p>Source for XML in <code>src/xml/names.xml</code>:</p><pre class="brush:xml">&lt;?xml version="1.0"?&gt;
+&lt;people&gt;
+    &lt;person&gt;
+        &lt;name&gt;mrhaki&lt;/name&gt;
+        &lt;country&gt;The Netherlands&lt;/country&gt;
+    &lt;/person&gt;
+    &lt;person&gt;
+        &lt;name&gt;hubert&lt;/name&gt;
+        &lt;country&gt;The Netherlands&lt;/country&gt;
+    &lt;/person&gt;
+&lt;/people&gt;
+</pre><p>When we run the task and the build is successful we see two files in the directory <code>build/splitter/names</code>:</p><pre class="brush:plain;light:true">$ gradle
+:splitNames
+
+BUILD SUCCESSFUL
+
+Total time: 2.208 secs
+$ ls build/splitter/names/
+hubert.xml mrhaki.xml
+</pre><p><em>Written with Gradle 1.2</em></p
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Deploying Our Gradle Plugin to a Maven Repository</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Deploying Our Gradle Plugin to a Maven Repository</h3>
+
+<div class="post">
+<p>We have <a href="http://mrhaki.blogspot.com/2009/11/gradle-goodness-creating-gradle-plugin.html">created a Gradle plugin</a>, but now we want to share it with others. Suppose we have a central Maven repository within our company than we can use this repository to distribute our plugin among other developers. We don't need to change the code of our plugin, but we do need to move the code into a new project. We created the plugin in the <code>buildSrc</code> directory and that means it is only available for that project. We create a new directory and move the <code>src</code> directory from the <code>buildSrc</code> directory to the new project directory. Next we create a <code>build.gradle</code> file.</p>
+<pre class="brush:plain;light:true">
+$ mkdir makedirs-plugin
+$ cd makedirs-plugin
+$ cp -R &lt;old-dir&gt;/buildSrc/src .
+$ touch build.gradle
+</pre>
+<p>We open <code>build.gradle</code> in a text editor. Our plugin code is now nothing more or less than Groovy code, so we need the Groovy plugin for our project. The classes must be compiled into class files, but we have dependencies on the Gradle API for our plugin. When the files where in the <code>buildSrc</code> directory all was well, because Gradle would make sure the classpath was correct. But now we are a normal Groovy project, so we must define the location of the Gradle API class files ourselves. We add the <code>lib</code> directory of our Gradle installation directory to the groovy configuration to resolve the dependencies.</p>
+<p>Next we define the location of our company Maven repository with the <code>uploadArchives()</code> method. A special <code>repositories.mavenDeployer()</code> method gives us the possibility to define the location. The <code>uploadArchives</code> task uses this location to deploy the JAR with all classes to the repository.</p>
+<pre class="brush:groovy">
+// File: build.gradle
+usePlugin 'groovy'  // Need it to compile plugin classes.
+usePlugin 'maven' // Need it to deploy to Maven repository.
+
+// Project configuration is used for Maven deploy:
+version = '1.0'
+group = 'com.mrhaki.gradle.plugins'
+
+uploadArchives {
+    repositories.mavenDeployer {
+        repository url: 'file:///shared/repos/m2/repository'
+    }
+}
+
+dependencies {
+    // Add all JAR files in the lib directory of theGradle installation directory
+    // to the groovy configuration (is also used by compile configuration)
+    groovy fileTree(dir: new File(gradle.gradleHomeDir, 'lib'), includes: ['*.jar'])
+}
+
+// Make sure all code is compiled, tested and checked before uploadArchives.
+uploadArchives.dependsOn ':build'
+</pre>
+<p>We run the build to deploy the JAR file to the repository: <code>$ gradle uploadArchives</code>.</p>
+<p>Okay we have deployed the plugin to the repository, it is time to use it in another project. We create a new directory and create the <code>build.gradle</code> file and open it in a text editor. We must use the <code>usePlugin()</code> method to enable the plugin, but the <code>com.mrhaki.blog.gradle.MakeDirsPlugin</code> class is not yet on the classpath. We need to define the build script dependency on the plugin with the <code>buildscript()</code> method. This will make sure any dependency needed by the build process itself can be resolved.</p>
+<pre class="brush:groovy">
+// File: build.gradle
+buildscript {
+    repositories {
+        mavenRepo urls: 'file:///shared/repos/m2/repository'
+    }
+    dependencies {
+        classpath 'com.mrhaki.gradle.plugins:makedirs-plugin:1.0'
+    }
+}
+
+usePlugin com.mrhaki.blog.gradle.MakeDirsPlugin
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

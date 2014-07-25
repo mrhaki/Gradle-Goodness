@@ -1,0 +1,91 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Create Checksums for Archives</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Create Checksums for Archives</h3>
+
+<div class="post">
+<p>If we want to create a checksum for a file in Gradle we can use the <a href="http://ant.apache.org/manual/Tasks/checksum.html">ANT checksum task</a>. We assign the file name to the <code>file</code> property of the task. Then the checksum task will generate a file with the checksum in the same directory.</p><p>Suppose we have a Java project and want to generate a checksum for the JAR file that is generated with the <code>jar</code> task. We can add an extra action to the <code>jar</code> task with the <code>doLast()</code> method. We pass a closure to this method and in the closure we define the action to create a checksum. The file name of the JAR file is accessible via the <code>archivePath</code> property:</p><pre class="brush:groovy">apply plugin: 'java'
+
+archivesBaseName = 'checksum-sample'
+
+jar.doLast { task -&gt;
+    ant.checksum file: task.archivePath
+}
+</pre><p>When we invoke the <code>jar</code> task we get an extra file in the <code>build/libs</code> directory with the name <code>checksum-sample.jar.MD5</code>. This file contains the checksum for the file <code>checksum-sample.jar</code>.</p><p>We can make sure in our Gradle build file that all archive tasks (like Zip, Jar, War) generate a checksum file for the archive file of that task. In the following build file we use the <code>withType()</code> method in the <code>afterEvaluate()</code> method to add the checksum task to all tasks of type Zip. This means also task types that extend the Zip task, like Jar, War and Ear, will get the extra action. We also create extra archives in our project to show we don't have to configure them explicitly with the checksum task, but that Gradle will add the action automatically.</p><pre class="brush:groovy">apply plugin: 'java'
+
+archivesBaseName = 'checksum-sample'
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: 'javadoc') {
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+
+artifacts {
+    archives sourceJar, javadocJar
+}
+
+tasks.withType(Zip) { task -&gt;
+    task.doLast {
+        ant.checksum file: it.archivePath
+    }
+}
+</pre><p>When we invoke the <code>assemble</code> task and look at the file that are generated we get the following command-line output:</p><pre class="brush:plain;light:true">$ gradle assemble
+:compileJava
+:processResources UP-TO-DATE
+:classes
+:jar
+:javadoc
+:javadocJar
+:sourceJar
+:assemble
+
+BUILD SUCCESSFUL
+
+Total time: 4.161 secs
+$ ls -1 build/libs
+checksum-sample-javadoc.jar
+checksum-sample-javadoc.jar.MD5
+checksum-sample-sources.jar
+checksum-sample-sources.jar.MD5
+checksum-sample.jar
+checksum-sample.jar.MD5
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

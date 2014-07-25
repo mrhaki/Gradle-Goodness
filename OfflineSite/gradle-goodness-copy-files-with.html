@@ -1,0 +1,71 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Copy Files with Filtering</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Copy Files with Filtering</h3>
+
+<div class="post">
+<p>Gradle's copy task is very powerful and includes filtering capabilities. This means we can change the contents of the files that are copied before they reach their new destination. We use the <code>filter()</code> method to define a filter. The good news is we can reuse the Ant filtering classes from the <code>org.apache.tools.ant.filters</code> package. We define the filtering class and can pass parameters for the filter. Or we can pass a closure which is passed each line as an argument. Within the closure we must return the filtered line.</p>
+<pre class="brush:groovy">
+import org.apache.tools.ant.filters.*
+
+task('filterCopy', type: Copy) {
+    from 'src/templates'
+    into buildDir
+    include '**/*.txt'
+    filter { line -&gt; line.contains('Gradle') ? line : '' }
+    filter(ReplaceTokens, tokens: [author: 'mrhaki', gradleVersion: gradle.gradleVersion])
+    filter(ConcatFilter, prepend: file('src/include/header.txt'))
+}
+</pre>
+<p>Now let's create a sample text file that will get filtered in <code>src/templates/HelloGradle.txt</code>:</p>
+<pre class="brush:plain;light:true">
+This is just a simple text file. This line will not make it.
+We show filtering capabilities of Gradle copy.
+This file is written by @author@ with Gradle version @gradleVersion@.
+</pre>
+<p>And we create the file <code>src/include/header.txt</code>:</p>
+<pre class="brush:plain;light:true">
+Include this header file.
+-------------------------
+</pre>
+<p>After we run <code>$ gradle filterCopy</code> we get the following contents for the file <code>build/HelloGradle.txt</code>:</p>
+<pre class="brush:plain;light:true">
+Include this header file.
+-------------------------
+We show filtering capabilities of Gradle copy in combination with the Ant filtering types.
+This file is written by mrhaki with Gradle version 0.9-rc-1.
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

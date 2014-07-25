@@ -1,0 +1,49 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Set Java Compiler Encoding</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Set Java Compiler Encoding</h3>
+
+<div class="post">
+<p>If we want to set an explicit encoding for the Java compiler in Gradle we can use the <code>options.encoding</code> property. For example we could add the following line to our Gradle build file to change the encoding for the <code>compileJava</code> task:</p><pre class="brush:groovy">apply plugin: 'java'
+
+compileJava.options.encoding = 'UTF-8'
+</pre><p>To set the encoding property on all compile tasks in our project we can use the <code>withType()</code> method on the <code>TaskContainer</code> to find all tasks of type <code>Compile</code>. Then we can set the encoding in the configuration closure:</p><pre class="brush:groovy">apply plugin: 'java'
+
+tasks.withType(Compile) {
+    options.encoding = 'UTF-8'
+}
+</pre
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>

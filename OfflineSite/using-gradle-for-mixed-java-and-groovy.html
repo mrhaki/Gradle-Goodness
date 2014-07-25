@@ -1,0 +1,235 @@
+<html>
+<head>
+
+<title>Gradle Goodness: Using Gradle for a Mixed Java and Groovy Project</title>
+
+<script language="javascript" src="scripts/shCore.js"></script> 
+<script language="javascript" src="scripts/shLegacy.js"></script> 
+<script language="javascript" src="scripts/shBrushJava.js"></script> 
+<script language="javascript" src="scripts/shBrushXml.js"></script> 
+<script language="javascript" src="scripts/shBrushJScript.js"></script> 
+<script language="javascript" src="scripts/shBrushGroovy.js"></script> 
+<script language="javascript" src="scripts/shBrushPlain.js"></script> 
+<script language="javascript" src="scripts/shBrushBash.js"></script> 
+ 
+<link href="styles/reset.css" rel="stylesheet" type="text/css" />
+<link href="styles/shCore.css" rel="stylesheet" type="text/css" />
+<link type="text/css" rel="stylesheet" href="styles/shThemeRDark.css"/>
+<link href="styles/blog.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<a href="index.html">Back to index</a>
+
+<h3 class="post-title">Gradle Goodness: Using Gradle for a Mixed Java and Groovy Project</h3>
+
+<div class="post">
+<p><a href="http://www.gradle.org">Gradle</a> is a build system to build software projects. Gradle supports convention over configuration, build-in takss and dependency support. We write a build script in Groovy (!) to define our Gradle build. This means we can use all available Groovy (and Java) stuff we want, like control structures, classes and methods. In this post we see how we can use Gradle to build a very simple mixed Java and Groovy project.</p>
+<p>To get started we must first have installed Gradle on our computers. We can read the manual to see how to do that. To check Gradle is installed correctly and we can run build script we type <code>$ gradle -v</code> at our shell prompt and we must get a result with the versions of Java, Groovy, operating system, Ivy and more.</p>
+<p>It is time to create our Groovy/Java project. We create a new directory <code>mixed-project</code>:</p>
+<pre class="brush:shell">
+$ mkdir mixed-project
+$ cd mixed-project
+$ touch build.gradle
+</pre>
+<p>Gradle uses plugins to define taks and conventions for certain type of projects. The plugins are distributed with Gradle and not (yet) downloaded from the internet. One of the plugins is the Groovy plugin. This plugin is extended from the Java plugin, so if we use the Groovy plugin we also have all functionality of the Java plugin. And that is exactly what we need for our project. The plugin provides a set of tasks like compile, build, assemble, clean and a directory structure convention. The plugin assumes we save our source files in <code>src/main/java</code> and <code>src/main/groovy</code> for example. The structure is similar to Maven conventions. As a matter of fact Gradle also has a Maven plugin that add Maven tasks like build, install to our build. For now we just need the Groovy plugin, so we open the file <code>build.gradle</code> in a text editor and add the following line:</p>
+<pre class="brush:groovy">
+usePlugin 'groovy'
+</pre>
+<p>To see the lists of tasks we can now execute by just including this one line we return to our shell and type <code>$ gradle -t</code> and we get the following list of tasks:</p>
+<pre class="brush:plain;light:true">
+------------------------------------------------------------
+Root Project
+------------------------------------------------------------
+:assemble - Builds all Jar, War, Zip, and Tar archives.
+   -&gt; :jar
+:build - Assembles and tests this project.
+   -&gt; :assemble, :check
+:buildDependents - Assembles and tests this project and all projects that depend on it.
+   -&gt; :build
+:buildNeeded - Assembles and tests this project and all projects it depends on.
+   -&gt; :build
+:check - Runs all checks.
+   -&gt; :test
+:classes - Assembles the main classes.
+   -&gt; :compileGroovy, :compileJava, :processResources
+:clean - Deletes the build directory.
+:compileGroovy - Compiles the main Groovy source.
+   -&gt; :compileJava
+:compileJava - Compiles the main Java source.
+:compileTestGroovy - Compiles the test Groovy source.
+   -&gt; :classes, :compileTestJava
+:compileTestJava - Compiles the test Java source.
+   -&gt; :classes
+:groovydoc - Generates the groovydoc for the source code.
+:jar - Generates a jar archive with all the compiled classes.
+   -&gt; :classes
+:javadoc - Generates the javadoc for the source code.
+   -&gt; :classes
+:processResources - Processes the main resources.
+:processTestResources - Processes the test resources.
+:test - Runs the unit tests.
+   -&gt; :classes, :testClasses
+:testClasses - Assembles the test classes.
+   -&gt; :compileTestGroovy, :compileTestJava, :processTestResources
+rule - Pattern: build&lt;ConfigurationName&gt;: Builds the artifacts belonging to the configuration.
+rule - Pattern: upload&lt;ConfigurationName&gt;Internal: Uploads the project artifacts of a configuration to the internal Gradle repository.
+rule - Pattern: upload&lt;ConfigurationName&gt;: Uploads the project artifacts of a configuration to a public Gradle repository.
+</pre>
+<p>We don't have any code yet in our project so we don't have any task to run right now, but it is good to know all these tasks can be executed once we have our code. Okay, we have to create our directory structure according to the conventions to make it all work without to much configuration. We can do this all by hand but we can also use a trick described in the <a href="http://docs.codehaus.org/display/GRADLE/Cookbook#Cookbook-Creatingsourceandresourcedirectories">Gradle cookbook</a>. We add a new task to our <code>build.gradle</code> file to create all necessary directories for us.</p>
+<pre class="brush:groovy">
+task initProject(description: 'Initialize project directory structure.') &lt;&lt; {
+    // Default package to be created in each src dir.
+    def defaultPackage = 'com/mrhaki/blog'
+    
+    ['java', 'groovy', 'resources'].each {
+        // convention.sourceSets contains the directory structure
+        // for our Groovy project. So we use this struture
+        // and make a directory for each node.
+        convention.sourceSets.all.&quot;${it}&quot;.srcDirs*.each { dir -&gt;
+            def newDir = new File(dir, defaultPackage)
+            logger.info &quot;Creating directory $newDir&quot;  // gradle -i shows this message.
+            newDir.mkdirs()  // Create dir.
+        }
+    }
+}
+</pre>
+<p>At the command prompt we type <code>$ gradle initProject</code> and the complete source directory struture is now created. Let's add some Java and Groovy source files to our project.  We keep it very simple, because this post is about Gradle and not so much about Java and Groovy. We create a Java interface in <code>src/main/java/com/mrhaki/blog/GreetingService.java</code>:</p>
+<pre class="brush:java">
+package com.mrhaki.blog;
+
+public interface GreetingService {
+    String greet(final String name);
+}
+</pre>
+<p>We provide a Java implementation for this interface in <code>src/main/java/com/mrhaki/blog/JavaGreetingImpl.java</code>:</p>
+<pre class="brush:java">
+package com.mrhaki.blog;
+
+public class JavaGreetingImpl implements GreetingService {
+    public String greet(final String name) {
+        return "Hello " + (name != null ? name : "stranger") + ". Greeting from Java.";
+    }
+}
+</pre>
+<p>And a Groovy implementation in <code>src/main/groovy/com/mrhaki/blog/GroovyGreetingImpl.groovy</code>:</p>
+<pre class="brush:groovy">
+package com.mrhaki.blog
+
+class GroovyGreetingImpl implements GreetingService {
+    String greet(String name) {
+        "Hello ${name ?: 'stranger'}. Greeting from Groovy"
+    }
+}
+</pre>
+<p>We have learned Gradle uses Groovy to define and execute the build script. But this bundled Groovy is not available for our project. We can choose which version of Groovy we want and don't have to rely on the version that is shipped with Gradle. We must define a dependency to the Groovy library version we want to use in our project in <code>build.gradle</code>. So we must add the following lines to the <code>build.gradle</code> file:</p>
+<pre class="brush:groovy">
+repositories {
+    mavenCentral()  // Define Maven central repository to look for dependencies.
+}
+
+dependencies {
+    groovy 'org.codehaus.groovy:groovy:1.6.5'  // group:name:version is a nice shortcut notation for dependencies. 
+}
+</pre>
+<p>In our shell we type <code>$ gradle compileJava compileGroovy</code> to compile the source files we just created. If we didn't make any typos we should see the message <code>BUILD SUCCESSFUL</code> at the command prompt. Let's add some test classes to our project to test our simple implementations. We create <code>src/test/java/com/mrhaki/blog/JavaGreetingTest.java</code>:</p>
+<pre class="brush:java">
+package com.mrhaki.blog;
+
+import static org.junit.Assert.*;
+import org.junit.Test;
+
+public class JavaGreetingTest {
+    final GreetingService service = new JavaGreetingImpl();
+
+    @Test public void testGreet() {
+        assertEquals("Hello mrhaki. Greeting from Java.", service.greet("mrhaki"));
+    }
+    
+    @Test public void testGreetNull() {
+        assertEquals("Hello stranger. Greeting from Java.", service.greet(null));
+    }
+}
+</pre>
+<p>And we create a Groovy test class in <code>src/test/groovy/com/mrhaki/blog/GroovyGreetingTest.groovy</code>:</p>
+<pre class="brush:groovy">
+package com.mrhaki.blog;
+
+import static org.junit.Assert.*;
+import org.junit.Test;
+
+public class JavaGreetingTest {
+    final GreetingService service = new JavaGreetingImpl();
+
+    @Test public void testGreet() {
+        assertEquals("Hello mrhaki. Greeting from Java.", service.greet("mrhaki"));
+    }
+    
+    @Test public void testGreetNull() {
+        assertEquals("Hello stranger. Greeting from Java.", service.greet(null));
+    }
+}
+</pre>
+<p>We add a dependency to <code>build.gradle</code> for JUnit:</p>
+<pre class="brush:groovy">
+dependencies {
+    groovy 'org.codehaus.groovy:groovy:1.6.5'  // group:name:version is a nice shortcut notation for dependencies. 
+    testCompile 'junit:junit:4.7'
+}
+</pre>
+<p>We return to the command prompt and type <code>$ gradle test</code>. Gradle compiles the code and runs the JUnit tests. The results of the test are stored in <code>build/reports/tests</code>. We can see the results in a web browser if we open <code>index.html</code>:</p>
+<a onblur="try {parent.deselectBloggerImageGracefully();} catch(e) {}" href="http://4.bp.blogspot.com/_-vJw6r2W-bw/SvVEgl3OKBI/AAAAAAAADEU/kFE_u_3pGHE/s1600-h/blog-gg-mixed1.png"><img style="display:block; margin:0px auto 10px; text-align:center;cursor:pointer; cursor:hand;width: 320px; height: 213px;" src="http://4.bp.blogspot.com/_-vJw6r2W-bw/SvVEgl3OKBI/AAAAAAAADEU/kFE_u_3pGHE/s320/blog-gg-mixed1.png" border="0" alt=""id="BLOGGER_PHOTO_ID_5401298654811006994" /></a>
+<p>Let's leave the coding part for now. It it time to package our code. We can use <code>$ gradle build</code> to create a JAR file with the compiled classes from the <code>src/main</code> directories. But first we make a change to <code>build.gradle</code> to include a version number. If we run <code>$ gradle -r</code> we get an overview of all properties for our project. Among them is the version property. We can set a value for the version property in the <code>build.gradle</code> file. We also set the basename for the archive:</p>
+<pre class="brush:groovy">
+version = "1.0-${new Date().format('yyyyMMdd')"  // The script is all Groovy, so we make use of all methods and features.
+archivesBaseName = 'greeting'
+</pre>
+<p>We return to the command prompt and type <code>$ gradle build</code>. Gradle runs and if all is successful we see in <code>build/libs</code> the file <code>greeting-1.0-20091107.jar</code>. Here is the complete <code>build.gradle</code> with all changes we made:</p>
+<pre class="brush:groovy">
+usePlugin 'groovy'
+
+version = &quot;1.0-${new Date().format('yyyyMMdd')}&quot; // The script is all Groovy, so we make use of all methods and features.
+archivesBaseName = 'greeting'
+
+repositories {
+    mavenCentral()  // Define Maven central repository to look for dependencies.
+}
+
+dependencies {
+    groovy 'org.codehaus.groovy:groovy:1.6.5'  // group:name:version is a nice shortcut notation for dependencies. 
+    testCompile 'junit:junit:4.7'
+}
+
+task initProject(description: 'Initialize project directory structure.') &lt;&lt; {
+    // Default package to be created in each src dir.
+    def defaultPackage = 'com/mrhaki/blog'
+    
+    ['java', 'groovy', 'resources'].each {
+        // convention.sourceSets contains the directory structure
+        // for our Groovy project. So we use this struture
+        // and make a directory for each node.
+        convention.sourceSets.all.&quot;${it}&quot;.srcDirs.each { dirs -&gt;
+            dirs.each { dir -&gt;
+                def newDir = new File(dir, defaultPackage)
+                logger.info &quot;Creating directory $newDir&quot;  // gradle -i shows this message.
+                newDir.mkdirs()  // Create dir.
+            }
+        }
+    }
+}
+</pre>
+<p>We learned how we can start a new project from scratch and with little coding get a compiled and tested archive wth our code. In future blog posts we learn more about Gradle, for example the multi-project support.</p
+</div>
+
+<script language="javascript"> 
+SyntaxHighlighter.config.bloggerMode = true;
+SyntaxHighlighter.config.clipboardSwf = 'scripts/clipboard.swf';
+SyntaxHighlighter.defaults['first-line'] = 0;
+SyntaxHighlighter.defaults['auto-links'] = false;
+SyntaxHighlighter.all();
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+
+</body>
+</html>
