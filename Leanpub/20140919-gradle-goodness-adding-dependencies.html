@@ -1,0 +1,127 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Adding Dependencies Only for Packaging to War</h3>
+
+<div class="post">
+<p>My colleague, Tom Wetjens, wrote a blog post <a href="http://blog.jdriven.com/2014/09/package-only-dependencies-maven/">Package-only dependencies in Maven</a>. He showed a Maven solution when we want to include dependencies in the WAR file, which are not used in any other scopes. In this blog post we will see how we solve this in Gradle.</p><p>Suppose we use the SLF4J Logging API in our project. We use the API as a compile dependency, because our code uses this API. But in our test runtime we want to use the SLF4J Simple implementation of this API. And in our WAR file we want to include the Logback implementation of the API. The Logback dependency is only needed to be included in the WAR file and shouldn't exist in any other dependency configuration.</p><p>We first add the War plugin to our project. The <code>war</code> task uses the <code>runtime</code> dependency configuration to determine which files are added to the <code>WEB-INF/lib</code> directory in our WAR file. We add a new dependency configuration <code>warLib</code> that extends the <code>runtime</code> configuration in our project.</p><pre class="brush:groovy">apply plugin: 'war'
+
+repositories.jcenter()
+
+configurations {
+    // Create new dependency configuration
+    // for dependencies to be added in 
+    // WAR file.
+    warLib.extendsFrom runtime
+}
+
+dependencies {
+    // API dependency for Slf4j.
+    compile 'org.slf4j:slf4j-api:1.7.7'
+
+    testCompile 'junit:junit:4.11'
+
+    // Slf4j implementation used for tests.
+    testRuntime 'org.slf4j:slf4j-simple:1.7.7'
+
+    // Slf4j implementation to be packaged
+    // in WAR file.
+    warLib 'ch.qos.logback:logback-classic:1.1.2'
+}
+
+war {
+    // Add warLib dependency configuration
+    classpath configurations.warLib
+
+    // We remove all duplicate files
+    // with this assignment.
+    // geFiles() method return a unique
+    // set of File objects, removing
+    // any duplicates from configurations
+    // added by classpath() method.
+    classpath = classpath.files
+}
+</pre><p>We can now run the <code>build</code> task and we get a WAR file with the following contents:</p><pre class="brush:plain;light:true">$ gradle build
+:compileJava UP-TO-DATE
+:processResources UP-TO-DATE
+:classes UP-TO-DATE
+:war
+:assemble
+:compileTestJava
+:processTestResources UP-TO-DATE
+:testClasses
+:test
+:check
+:build
+
+BUILD SUCCESSFUL
+
+Total time: 6.18 secs
+$ jar tvf build/libs/package-only-dep-example.war
+     0 Fri Sep 19 05:59:54 CEST 2014 META-INF/
+    25 Fri Sep 19 05:59:54 CEST 2014 META-INF/MANIFEST.MF
+     0 Fri Sep 19 05:59:54 CEST 2014 WEB-INF/
+     0 Fri Sep 19 05:59:54 CEST 2014 WEB-INF/lib/
+ 29257 Thu Sep 18 14:36:24 CEST 2014 WEB-INF/lib/slf4j-api-1.7.7.jar
+270750 Thu Sep 18 14:36:24 CEST 2014 WEB-INF/lib/logback-classic-1.1.2.jar
+427729 Thu Sep 18 14:36:26 CEST 2014 WEB-INF/lib/logback-core-1.1.2.jar
+   115 Wed Sep 03 09:24:40 CEST 2014 WEB-INF/web.xml
+</pre><p>Also when we run the <code>dependencies</code> task we can see how the implementations of the SLF4J API relate to the dependency configurations:</p><pre class="brush:groovy">$ gradle dependencies
+:dependencies
+
+------------------------------------------------------------
+Root project
+------------------------------------------------------------
+
+archives - Configuration for archive artifacts.
+No dependencies
+
+compile - Compile classpath for source set 'main'.
+\--- org.slf4j:slf4j-api:1.7.7
+
+default - Configuration for default artifacts.
+\--- org.slf4j:slf4j-api:1.7.7
+
+providedCompile - Additional compile classpath for libraries that should not be part of the WAR archive.
+No dependencies
+
+providedRuntime - Additional runtime classpath for libraries that should not be part of the WAR archive.
+No dependencies
+
+runtime - Runtime classpath for source set 'main'.
+\--- org.slf4j:slf4j-api:1.7.7
+
+testCompile - Compile classpath for source set 'test'.
++--- org.slf4j:slf4j-api:1.7.7
+\--- junit:junit:4.11
+     \--- org.hamcrest:hamcrest-core:1.3
+
+testRuntime - Runtime classpath for source set 'test'.
++--- org.slf4j:slf4j-api:1.7.7
++--- junit:junit:4.11
+|    \--- org.hamcrest:hamcrest-core:1.3
+\--- org.slf4j:slf4j-simple:1.7.7
+     \--- org.slf4j:slf4j-api:1.7.7
+
+warLib
++--- org.slf4j:slf4j-api:1.7.7
+\--- ch.qos.logback:logback-classic:1.1.2
+     +--- ch.qos.logback:logback-core:1.1.2
+     \--- org.slf4j:slf4j-api:1.7.6 -> 1.7.7
+
+(*) - dependencies omitted (listed previously)
+
+BUILD SUCCESSFUL
+
+Total time: 6.274 secs
+</pre><p>Code written with Gradle 2.1.</p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2014/09/gradle-goodness-adding-dependencies.html">Original blog post</a> written on September 19, 2014.
+</p>
+
+</body>
+</html>

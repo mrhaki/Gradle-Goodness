@@ -1,0 +1,27 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Setting Default Tasks</h3>
+
+<div class="post">
+<p>To run a task with Gradle we must specify the task name as an argument. If we don't specify a task name we get an error that Gradle cannot determine a task to execute. We can define the tasks that need to be executed when we don't specify a task name explicitly. In a Gradle build script we invoke the method <code>defaultTasks</code> and pass the name or names of the tasks as arguments to the method. These tasks are executed when we run Gradle without any task name. When we run <code>$ gradle -t</code> or <code>$ gradle --tasks</code> we can see which tasks are the default tasks.</p>
+<pre class="brush:groovy">
+// File: build.gradle
+usePlugin 'java'
+
+defaultTasks 'clean', 'build'  // Run tasks clean and build if no task is specified.
+</pre>
+<pre class="brush:plain;light:true">
+$ gradle --tasks | grep "Default Tasks"
+Default Tasks: clean, build
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2009/11/gradle-goodness-setting-default-tasks.html">Original blog post</a> written on November 17, 2009.
+</p>
+
+</body>
+</html>

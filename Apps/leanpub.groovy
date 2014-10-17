@@ -4,7 +4,7 @@ import groovy.text.*
 baseDir = '../Leanpub'
 
 def bloggerId = '6671019398434141469'
-def baseURI = "https://www.blogger.com/feeds/$bloggerId/posts/default/-/Groovy%3AGoodness" 
+def baseURI = "https://www.blogger.com/feeds/$bloggerId/posts/default/-/Gradle%3AGoodness" 
 
 def nextLink = baseURI 
 
@@ -14,14 +14,14 @@ while (nextLink) {
     feed.entry.each { 
         handleEntry(it) 
     }
-    nextLink = feed.link.find { it.@rel == 'next' }.@href.toString() - '/-/Groovy%3AGoodness'
+    nextLink = feed.link.find { it.@rel == 'next' }.@href.toString() - '/-/Gradle%3AGoodness'
 }
 
 def handleEntry(entry) {
     def templateEngine = new GStringTemplateEngine()
     def publishedDate = Date.parse("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", entry.published.toString())
     def postUrl = entry.link.find { it.@rel == 'alternate' }.@href.toString()
-    def postTitle = entry.title.toString() - 'Groovy Goodness: '
+    def postTitle = entry.title.toString() - 'Gradle Goodness: '
     def content = entry.content.toString()
     content = content[0..(content.indexOf('<div class="blogger-post-footer"') - 1)]
     def template = templateEngine.createTemplate(new File('leanpub-template.gtpl'))

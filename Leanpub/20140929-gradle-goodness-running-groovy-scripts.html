@@ -1,0 +1,56 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Running Groovy Scripts as Application</h3>
+
+<div class="post">
+<p>In a <a href="http://mrhaki.blogspot.com/2010/09/gradle-goodness-run-java-application.html">previous post</a> we learned how to run a Java application in a Gradle project. The Java source file with a <code>main</code> method is part of the project and we use the <code>JavaExec</code> task to run the Java code. We can use the same <code>JavaExec</code> task to run a Groovy script file.</p><p>A Groovy script file doesn't have an explicit <code>main</code> method, but it is added when we compile the script file. The name of the script file is also the name of the generated class, so we use that name for the <code>main</code> property of the <code>JavaExec</code> task. Let's first create simple Groovy script file to display the current date. We can pass an extra argument with the date format we wan't to use.</p><pre class="brush:groovy">// File: src/main/groovy/com/mrhaki/CurrentDate.groovy
+package com.mrhaki
+
+// If an argument is passed we assume it is the
+// date format we want to use.
+// Default format is dd-MM-yyyy.
+final String dateFormat = args ? args[0] : 'dd-MM-yyyy'
+
+// Output formatted current date and time.
+println "Current date and time: ${new Date().format(dateFormat)}"
+</pre><p>Our Gradle build file contains the task <code>runScript</code> of type <code>JavaExec</code>. We rely on the Groovy libraries included with Gradle, because we use <code>localGroovy()</code> as a compile dependency. Of course we can change this to refer to another Groovy version if we want to using the group, name and version notation together with a valid repository.</p><pre class="brush:groovy">// File: build.gradle
+apply plugin: 'groovy'
+
+dependencies {
+    compile localGroovy()
+}
+
+task runScript(type: JavaExec) {
+    description 'Run Groovy script'
+
+    // Set main property to name of Groovy script class.
+    main = 'com.mrhaki.CurrentDate'
+
+    // Set classpath for running the Groovy script.
+    classpath = sourceSets.main.runtimeClasspath
+
+    if (project.hasProperty('custom')) {
+        // Pass command-line argument to script.
+        args project.getProperty('custom')
+    }
+}
+
+defaultTasks 'runScript'
+</pre><p>We can run the script with or without the project property <code>custom</code> and we see the changes in the output:</p><pre class="brush:plain;light:true">$ gradle -q
+Current date and time: 29-09-2014
+$ gradle -q -Pcustom=yyyyMMdd
+Current date and time: 20140929
+$ gradle -q -Pcustom=yyyy
+Current date and time: 2014
+</pre><p>Code written with Gradle 2.1.</p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2014/09/gradle-goodness-running-groovy-scripts.html">Original blog post</a> written on September 29, 2014.
+</p>
+
+</body>
+</html>

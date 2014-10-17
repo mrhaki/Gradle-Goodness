@@ -1,0 +1,75 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Add Incremental Build Support to Custom Tasks with Annotations</h3>
+
+<div class="post">
+<p>In a <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-add-incremental-build.html">previous post</a> we learned how we can use the <em>inputs</em> and <em>outputs</em> properties to set properties or files that need to be checked to see if a task is up to date. In this post we learn how a custom task class can use annotations to set input properties, file or files and output files or dir.</p>
+<p>For input we can use <code>@Input</code>, <code>@InputFile</code>, <code>@InputFiles</code> or <code>@InputDirectory</code> annotations. Gradle uses the properties with annotations for checking if a task is up to date. Output file or directory can be marked with <code>@OutputFile</code> and <code>@OutputDirectory</code>.</p>
+<pre class="brush:groovy">
+task generateVersionFile(type: Generate) {
+    version = '2.0'
+    outputFile = file("$project.buildDir/version.txt")
+}
+
+task showContents &lt;&lt; {
+    println generateVersionFile.outputFile.text
+}
+showContents.dependsOn generateVersionFile
+
+class Generate extends DefaultTask {
+    @Input
+    String version
+
+    @OutputFile
+    File outputFile
+
+    @TaskAction
+    void generate() {
+        def file = getOutputFile()
+        if (!file.isFile()) {
+            file.parentFile.mkdirs()
+            file.createNewFile()
+        }
+        file.write "Version: ${getVersion()}"
+    }
+}
+</pre>
+<p>We can run our task and get the following output:</p>
+<pre class="brush:plain;light:true">
+$ gradle showContents
+:generateVersionFile
+:showContents
+Version: 2.0
+
+BUILD SUCCESSFUL
+</pre>
+<p>And if we run it again we see the task is now up to date:</p>
+<pre class="brush:plain;light:true">
+$ gradle showContents
+:generateVersionFile UP-TO-DATE
+:showContents
+Version: 2.0
+
+BUILD SUCCESSFUL
+</pre>
+<p>We can change the version numer in our build script to 2.1 and see the output:</p>
+
+<pre class="brush:plain;light:true">
+$ gradle showContents
+:generateVersionFile
+:showContents
+Version: 2.1
+
+BUILD SUCCESSFUL
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-add-incremental-build_14.html">Original blog post</a> written on October 14, 2010.
+</p>
+
+</body>
+</html>

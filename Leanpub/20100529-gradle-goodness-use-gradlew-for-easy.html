@@ -1,0 +1,33 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Use gradlew for Easy Gradle Execution</h3>
+
+<div class="post">
+<p>Gradle is a great build language. To use gradle for our project we can download the Gradle distribution and install it on our machine. But maybe we want to share our project with other people that don't have Gradle installed. Or suppose we use a continuous integration server without native Gradle support, but with support to run command-line commands. Then we can use the Gradle wrapper. The wrapper is responsible for downloading the Gradle distribution and making it available for our project.</p>
+<p>To enable the Gradle wrapper for our project we first add a new task to our <code>build.gradle</code>:</p>
+<pre class="brush:groovy">
+// File: build.gradle
+task createWrapper(type: Wrapper) {
+    gradleVersion = '0.9-preview-1'
+}
+</pre>
+<p>Next we run <code>$ gradle createWrapper</code> and when the process is finished we take a look at the project directory and see the following new files:</p>
+<pre class="brush:plain">
+gradle-wrapper.jar
+gradle-wrapper.properties
+gradlew
+gradlew.bat
+</pre>
+<p>Now we only have to distribute this files with our project. Now anyone can run <code>$ gradlew</code> to execute the tasks defined in the Gradle build file. If Gradle hasn't been installed yet, it will be downloaded and installed for the user and the task is executed!</p>
+<p>More information is available in the <a href="http://www.gradle.org/0.9-preview-1/docs/userguide/gradle_wrapper.html">Gradle User Guide</a>.</p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/05/gradle-goodness-use-gradlew-for-easy.html">Original blog post</a> written on May 29, 2010.
+</p>
+
+</body>
+</html>

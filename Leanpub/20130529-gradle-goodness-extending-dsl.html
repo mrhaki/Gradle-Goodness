@@ -1,0 +1,191 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Extending DSL </h3>
+
+<div class="post">
+<p>Gradle already has a powerful DSL, but Gradle wouldn't be Gradle if we couldn't extend the DSL ourselves. Maybe we have our own naming conventions in our company or we have a special problem domain we want to express in a Gradle build script. We can use the <code>ExtensionContainer</code>, available via <code>project.extensions</code>, to add new concepts to our build scripts. In the <a href="http://www.gradleware.com/resources/webinars/standardizing-your-enterprise-build-environment-gradle">Standardizing your enterprise build environment</a> webinar by Luke Daley some examples are shown on how to extend the DSL. Also in the <code>samples</code> folder of the Gradle distribution are examples on how to create a custom DSL.</p><p>Let's first create a simple DSL extension. We first define a new class <code>CommonDependencies</code> with methods to define dependencies in a Java project. We want to use these methods with descriptive names in our build scripts. To add the class we use the <code>create()</code> method of the <code>ExtensionContainer</code>. The first argument is a name that needs to be unique within the build. The name can be used together with a configuration block in the script to invoke methods on the class we pass as the second argument. Finally we can pass constructor arguments for the class as last arguments of the <code>create()</code> method.</p><pre class="brush:groovy;highlight:[42]">/**
+ * Class for DSL extension. A default repository is added
+ * to the project. The use&lt;name&gt;() methods add 
+ * dependencies to the project.
+ */
+class CommonDependencies {
+    /** Reference to project, so we can set dependencies/repositories */
+    final Project project
+
+    CommonDependencies(final Project project) {
+        this.project = project
+
+        // Set mavenCentral() repository for project.
+        project.repositories {
+            mavenCentral()
+        }
+    }
+
+    /**
+     * Define Spock for testCompile dependency 
+     * @param version Version of Spock dependency with default 0.7-groovy-2.0
+     */
+    void useSpock(final String version = '0.7-groovy-2.0') {
+        project.dependencies {
+            testCompile "org.spockframework:spock-core:$version"
+        }
+    }
+
+    /**
+     * Define Spring for compile dependency 
+     * @param version Version of Spring dependency with default 3.2.3.RELEASE
+     */
+    void useSpring(final String version = '3.2.3.RELEASE') {
+        project.dependencies {
+            compile "org.springframework:spring-core:$version"
+        }
+    }
+
+}
+
+// Add DSL extension 'commonDependencies' with class CommonDependencies 
+// passing project as constructor argument.
+project.extensions.create('commonDependencies', CommonDependencies, project)
+
+apply plugin: 'java'
+
+// Use new DSL extension. Notice we can use configuration closures just
+// like we are used to with other Gradle DSL methods.
+commonDependencies {
+    useSpock()
+    useSpring '3.1.4.RELEASE'
+}
+
+// We can still use the Java plugin dependencies configuration.
+dependencies {
+    compile 'joda-time:joda-time:2.1'
+}
+</pre><p>We can invoke the <code>dependencies</code> task from the command-line and we see all dependencies are resolved correctly:</p><pre class="brush:plain;light:true">$ gradle dependencies
+...
+compile - Compile classpath for source set 'main'.
++--- org.springframework:spring-core:3.1.4.RELEASE
+|    +--- org.springframework:spring-asm:3.1.4.RELEASE
+|    \--- commons-logging:commons-logging:1.1.1
+\--- joda-time:joda-time:2.1
+...
+testCompile - Compile classpath for source set 'test'.
++--- org.springframework:spring-core:3.1.4.RELEASE
+|    +--- org.springframework:spring-asm:3.1.4.RELEASE
+|    \--- commons-logging:commons-logging:1.1.1
++--- joda-time:joda-time:2.1
+\--- org.spockframework:spock-core:0.7-groovy-2.0
+     +--- junit:junit-dep:4.10
+     |    \--- org.hamcrest:hamcrest-core:1.1 -> 1.3
+     +--- org.codehaus.groovy:groovy-all:2.0.5
+     \--- org.hamcrest:hamcrest-core:1.3
+...
+</pre><p>We can also use a plugin to extend the Gradle DSL. In the plugin code we use the same <code>project.extensions.create()</code> method so it is more transparent for the user. We only have to apply the plugin to a project and we can use the extra DSL methods in the build script. Let's create a simple plugin that will extend the DSL with the concept of a book and chapters. The following build script shows what we can do after we have applied the plugin:</p><pre class="brush:groovy">apply plugin: 'book'
+
+book {
+    title 'Groovy Goodness Notebook'
+    chapter project(':chapter1')
+    chapter project(':chapter2')
+}
+</pre><p>To achieve this we first create the following directory structure with files:</p><pre class="brush:plain;light:true">+ sample
+  + buildSrc
+     + src/main/groovy/com/mrhaki/gradle
+       + Book.groovy
+       + BookPlugin.groovy
+     + src/main/resources/META-INF/gradle-plugins
+       + book.properties
+  + book
+    + build.gradle
+  + chapter1/src/html
+    + index.html
+  + chapter2/src/html
+    + index.html
+  + settings.gradle
+</pre><p>The <code>Book</code> class will be added as DSL extension. The class has a method to set the <code>title</code> property and a method to add chapters which are Gradle project objects.</p><pre class="brush:groovy">// File: buildSrc/src/main/groovy/com/mrhaki/gradle/Book.groovy
+package com.mrhaki.gradle
+
+import org.gradle.api.*
+
+class Book {
+    String title
+    List&lt;Project&gt; chapters = []
+
+    void title(final String title) {
+        this.title = title
+    } 
+
+    void chapter(final Project chapter) {
+        chapters &lt;&lt; chapter
+    }
+}
+</pre><p>Next we create the <code>BookPlugin</code> class. The plugin will add the <code>Book</code> class as DSL extension. But we also create a task <code>aggregate</code> that will visit each chapter that is defined and then copies the content from the <code>scr/html</code> folder in the chapter project to the <code>aggregate</code> folder in the build folder. Finally we add a <code>dist</code> task that will simply archive the contents of the aggregated files.</p><pre class="brush:groovy">// File: buildSrc/src/main/groovy/com/mrhaki/gradle/BookPlugin.groovy
+package com.mrhaki.gradle
+
+import org.gradle.api.*
+import org.gradle.api.tasks.*
+import org.gradle.api.tasks.bundling.Zip
+
+class BookPlugin implements Plugin&lt;Project&gt; {
+    void apply(Project project) {
+        project.configure(project) {
+            apply plugin: 'base'
+
+            def book = project.extensions.create 'book', Book
+
+            afterEvaluate {
+                // Create task in afterEvaluate, so chapter projects
+                // are resolved, otherwise chapters is empty.
+                tasks.create(name: 'aggregate') {
+
+                    // Skip task if no chapters are defined.
+                    onlyIf { !book.chapters.empty }
+
+                    doFirst {
+                        // Copy content in src/html of 'book' directory.
+                        copy {
+                            from file('src/html')
+                            into file("${buildDir}/aggregate")
+                        }
+
+                        // Copy content in src/html of chapter directories.
+                        book.chapters.each { chapterProject ->
+                            copy {
+                                from chapterProject.file('src/html')
+                                into file("${buildDir}/aggregate/${chapterProject.name}")
+                            }
+                        }
+                    }
+                }
+            }
+
+            tasks.create(name: 'dist', dependsOn: 'aggregate', type: Zip) {
+                from file("${buildDir}/aggregate")
+            }
+        }        
+    }
+}
+</pre><p>We create the file <code>book.properties</code> to tell Gradle about our new plugin:</p><pre class="brush:plain"># File: buildSrc/src/main/resources/META-INF/gradle-plugins/book.properties
+implementation-class=com.mrhaki.gradle.BookPlugin
+</pre><p>Our plugin is finished, so we can add a book project and some chapter projects. In the <code>settings.gradle</code> file we define an inclusion for these directories:</p><pre class="brush:plain">// File: settings.gradle
+include 'chapter1'
+include 'chapter2'
+include 'book'
+</pre><p>In the chapter directories we can add some sample content in the <code>src/html</code> directories. And in the <code>book</code> folder we create the following <code>build.gradle</code> file:</p><pre class="brush:groovy">// File: book/build.gradle
+apply plugin: 'book'
+
+book {
+    title 'Groovy Goodness Notebook'
+    chapter project(':chapter1')
+    chapter project(':chapter2')
+}
+</pre><p>Now from the <code>book</code> folder we can run the <code>aggregate</code> and <code>dist</code> tasks. The end result is that all files from the chapter <code>src/html</code> folder are in the <code>build/aggregate</code> folder. And in the <code>build/distributions</code> folder we have the file <code>book.zip</code> containing the files.</p><p>Code written with Gradle 1.6.</p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2013/05/gradle-goodness-extending-dsl.html">Original blog post</a> written on May 29, 2013.
+</p>
+
+</body>
+</html>

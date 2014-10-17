@@ -1,0 +1,107 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Adding Tasks to a Predefined Group</h3>
+
+<div class="post">
+<p>In Gradle we can group related tasks using the <code>group</code> property of a task. We provide the name of our group and if we look at the output of the <code>tasks</code> task we can see our tasks grouped in section with the given name. In the next sample we create a new task <code>publish</code> and assign it the group name <em>Publishing</em>.</p><pre class="brush:groovy">task publish(type: Copy) {
+    from "sources"
+    into "output"
+}
+
+configure(publish) {    
+    group = 'Publishing'
+    description = 'Publish source code to output directory'
+}
+</pre><p>If we execute <code>tasks</code> we get the following output:</p><pre class="brush:plain;light:true">$ gradle tasks 
+:tasks
+
+------------------------------------------------------------
+All tasks runnable from root project
+------------------------------------------------------------
+
+Help tasks
+----------
+dependencies - Displays the dependencies of root project 'taskGroup'.
+help - Displays a help message
+projects - Displays the sub-projects of root project 'taskGroup'.
+properties - Displays the properties of root project 'taskGroup'.
+tasks - Displays the tasks runnable from root project 'taskGroup' (some of the displayed tasks may belong to subprojects).
+
+Publishing tasks
+----------------
+publish - Publish source code to output directory
+
+To see all tasks and more detail, run with --all.
+
+BUILD SUCCESSFUL
+
+Total time: 2.327 secs
+</pre><p>Suppose we apply the Java plugin to our project. We get a lot of new tasks, which are already in groups with names like <em>Build</em> and <em>Documentation</em>. If we want to add our own custom tasks to one of those groups we only have to use the correct name for the <code>group</code> property of our task. In the following build file we apply the Java plugin and use the <em>Build</em> group name as a group name for our task. The name is defined as a constant of the <code>BasePlugin</code>.</p><pre class="brush:groovy">apply plugin: 'java'
+
+task publish(type: Copy) {
+    from 'sources' 
+    into 'output' 
+}
+
+configure(publish) {    
+    group = BasePlugin.BUILD_GROUP // Or use 'build'
+    description = 'Publish source code to output directory'
+}
+</pre><p>When we run <code>tasks</code> again we can see our task is in the <em>Build</em> section together with the tasks added by the Java plugin:</p><pre class="brush:plain;light:true">$ gradle tasks 
+:tasks
+
+------------------------------------------------------------
+All tasks runnable from root project
+------------------------------------------------------------
+
+Build tasks
+-----------
+assemble - Assembles all Jar, War, Zip, and Tar archives.
+build - Assembles and tests this project.
+buildDependents - Assembles and tests this project and all projects that depend on it.
+buildNeeded - Assembles and tests this project and all projects it depends on.
+classes - Assembles the main classes.
+clean - Deletes the build directory.
+jar - Assembles a jar archive containing the main classes.
+publish - Publish source code to output directory
+testClasses - Assembles the test classes.
+
+Documentation tasks
+-------------------
+javadoc - Generates Javadoc API documentation for the main source code.
+
+Help tasks
+----------
+dependencies - Displays the dependencies of root project 'taskGroup'.
+help - Displays a help message
+projects - Displays the sub-projects of root project 'taskGroup'.
+properties - Displays the properties of root project 'taskGroup'.
+tasks - Displays the tasks runnable from root project 'taskGroup' (some of the displayed tasks may belong to subprojects).
+
+Verification tasks
+------------------
+check - Runs all checks.
+test - Runs the unit tests.
+
+Rules
+-----
+Pattern: build&lt;configurationname&gt;: Assembles the artifacts of a configuration.
+Pattern: upload&lt;configurationname&gt;: Assembles and uploads the artifacts belonging to a configuration.
+Pattern: clean&lt;taskname&gt;: Cleans the output files of a task.
+
+To see all tasks and more detail, run with --all.
+
+BUILD SUCCESSFUL
+
+Total time: 2.896 secs</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2012/06/gradle-goodness-adding-tasks-to.html">Original blog post</a> written on June 13, 2012.
+</p>
+
+</body>
+</html>

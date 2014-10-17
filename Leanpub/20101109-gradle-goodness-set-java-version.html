@@ -1,0 +1,34 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Set Java Version Compatibility</h3>
+
+<div class="post">
+<p>We can use the properties <em>sourceCompatibility</em> and <em>targetCompatibility</em> provided by the Java plugin to define the Java version compatibility for compiling sources. The value of these properties is a <code>JavaVersion</code> enum constant, a String value or a Number. If the value is a String or Number we can even leave out the <em>1.</em> portion for Java 1.5 and 1.6. So we can just use <em>5</em> or <em>'6'</em> for example.</p>
+<p>We can even use our own custom classes as long as we override the <code>toString()</code> method and return a String value that is valid as a Java version.</p>
+<pre class="brush:groovy">
+apply plugin: 'java'
+
+sourceCompatibility = 1.6 // or '1.6', '6', 6, JavaVersion.VERSION_1_6, new Compatibility('Java 6')
+
+class Compatibility {
+    String version
+
+    Compatibility(String versionValue) {
+        def matcher = (versionValue =~ /Java (\d)/)
+        version = matcher[0][1]
+    }
+
+    String toString() { version }
+}
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/11/gradle-goodness-set-java-version.html">Original blog post</a> written on November 09, 2010.
+</p>
+
+</body>
+</html>

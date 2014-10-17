@@ -1,7 +1,7 @@
 <html>
 <head>
 
-<title>Groovy Goodness</title>
+<title>Gradle Goodness</title>
 
 <link href="styles/reset.css" rel="stylesheet" type="text/css" />
 <link href="styles/shCore.css" rel="stylesheet" type="text/css" />

@@ -1,0 +1,91 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Running Tests in Parallel</h3>
+
+<div class="post">
+<p>Once we apply the Java plugin we can run our tests with the <em>test</em> task. Normally each test is run sequentially, but we can also run tests in parallel. This speeds up the test task considerably especially with a lot of tests. We set the property <em>maxParallelForks</em> to a number greater than 1 to enable parallel tests.</p><p>We can also set the additional property <em>forkEvery</em> on the test task. With this property we define how many tests should run in a parallel test fork.</p>
+<p>In the following build script we first create a lot of tests with the <em>createTests</em> task and then we can run them with the <em>test</em> task. We can pass the properties <em>maxParallelForks</em> and <em>forkEvery</em> to play around and see what happens. Of course we can also use hard coded values in our build script for the <em>test</em> task properties.</p>
+<pre class="brush:groovy">
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile 'junit:junit:4.8.2'
+}
+
+test {
+    if (project.hasProperty('maxParallelForks')) 
+        maxParallelForks = project.maxParallelForks as int
+    if (project.hasProperty('forkEvery')) 
+        forkEvery = project.forkEvery as int
+}
+
+packages = 10
+tests = 30
+
+task createTests &lt;&lt; {
+    (0..packages).each { packageCounter ->
+        def packageName = "gradletest${packageCounter}"
+        (0..tests).each { classCounter ->
+            def testClassName = "Gradle${classCounter}Test"
+            copy {
+                from 'src/templates'
+                into 'src/test/java'
+                expand([packageName: packageName, testClassName: testClassName])
+                rename '(.*).java', packageName + '/' + testClassName + '.java'
+                include 'SampleTest.java'
+            }
+        }
+    }
+}
+</pre>
+<pre class="brush:java">
+// File: src/templates/SampleTest.java
+package ${packageName};
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+public class ${testClassName} {
+
+    @Test
+    public void testString() throws Exception {
+        Thread.sleep(200);
+        assertEquals("mrhaki", "mr" + "haki");
+    }
+}
+</pre>
+<p>So first we create the tests: <code>$ gradle createTests</code>. And then we can experiment with different options:</p>
+<pre class="brush:plain">
+$ gradle clean test
+...
+BUILD SUCCESSFUL
+
+Total time: 1 mins 33.942 secs
+
+$ gradle clean test -PmaxParallelForks=10
+...
+BUILD SUCCESSFUL
+
+Total time: 36.68 secs
+
+$ gradle clean test -PmaxParallelForks=4 -PforkEvery=25
+...
+BUILD SUCCESSFUL
+
+Total time: 56.066 secs
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/11/gradle-goodness-running-tests-in.html">Original blog post</a> written on November 10, 2010.
+</p>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Suppress Progress Logging</h3>
+
+<div class="post">
+<p>Gradle has some sophisticated progress logging on the console. For example we can see how much percentage of the building process is done. The percentage value is updated on the same console line. The following snippet is a sample of such output <code>&gt; Building 0% &gt; :dependencies &gt; Resolving dependencies ':compile'</code>. The information is updated on the same line, which is really nice. But sometimes we might need to run Gradle builds on a system that doesn't support this mechanism on the console or terminal, possibly an continuous integration server. To disable the progress logging we can set the environment variable <code>TERM</code> to the value <code>dumb</code>.</p><p>Written with Gradle 2.0.</p><br />
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2014/08/gradle-goodness-suppress-progress.html">Original blog post</a> written on August 15, 2014.
+</p>
+
+</body>
+</html>

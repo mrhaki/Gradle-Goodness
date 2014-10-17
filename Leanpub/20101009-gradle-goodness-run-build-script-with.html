@@ -1,0 +1,22 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Run a Build Script With a Different Name</h3>
+
+<div class="post">
+<p>Normally Gradle looks for a build script file with the name <code>build.gradle</code> in the current directory to execute a build. But we can easily use a different name or directory for the build file. We only have to use the <code>-b</code> or <code>--build-file</code> command-line option and tell Gradle the name of the build script file.</p>
+<pre class="brush:plain;light:true">
+$ gradle -b builder.gradle
+$ gradle -b otherdir/build.gradle
+$ gradle --build-file otherdir/run.it
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-run-build-script-with.html">Original blog post</a> written on October 09, 2010.
+</p>
+
+</body>
+</html>

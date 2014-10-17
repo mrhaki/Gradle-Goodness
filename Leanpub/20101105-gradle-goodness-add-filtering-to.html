@@ -1,0 +1,71 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Add Filtering to ProcessResources Tasks</h3>
+
+<div class="post">
+<p>When we apply the Java plugin (or any dependent plugin like the Groovy plugin) we get new tasks in our project to copy resources from the source directory to the classes directory. So if we have a file <code>app.properties</code> in the directory <code>src/main/resources</code> we can run the task <code>$ gradle processResources</code> and the file is copied to <code>build/classes/main/app.properties</code>. But what if we want to apply for example some filtering while the file is copied? Or if we want to rename the file? How we can configure the <em>processResources</em> task?</p>
+<p>The task itself is just an implementation of the <em>Copy</em> task. This means we can use all the configuration options from the <em>Copy</em> task. And that includes filtering and renaming the files. So we need to find all tasks in our project that copy resources and then add for example filtering to the configuration. The following build script shows how we can do this:</p>
+<pre class="brush:groovy">
+import org.apache.tools.ant.filters.*
+
+apply plugin: 'java'
+
+version = '1.0-DEVELOPMENT'
+
+afterEvaluate {
+    configure(allProcessResourcesTasks()) {
+        filter(ReplaceTokens, 
+               tokens: [version: project.version, gradleVersion: project.gradle.gradleVersion])
+    }
+}
+
+def allProcessResourcesTasks() {
+    sourceSets.all.processResourcesTaskName.collect {
+        tasks[it]
+    }
+}
+</pre>
+<p>Let's create the following two files in our project directory:</p>
+<pre class="brush:plain;">
+# src/main/resources/app.properties
+appversion=@version@
+</pre>
+<pre class="brush:plain">
+# src/test/resources/test.properties
+gradleVersion=@gradleVersion@
+</pre>
+<p>We can now execute the build and look at the contents of the copied property files:</p>
+<pre class="brush:plain;light:true;highlight:[2,7]">
+$ gradle build
+:compileJava
+:processResources
+:classes
+:jar
+:assemble
+:compileTestJava
+:processTestResources
+:testClasses
+:test
+:check
+:build
+
+BUILD SUCCESSFUL
+
+Total time: 4.905 secs
+
+$ cat build/classes/main/app.properties 
+appversion=1.0-DEVELOPMENT
+$ cat build/classes/test/test.properties 
+gradleVersion=0.9-rc-2
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/11/gradle-goodness-add-filtering-to.html">Original blog post</a> written on November 05, 2010.
+</p>
+
+</body>
+</html>

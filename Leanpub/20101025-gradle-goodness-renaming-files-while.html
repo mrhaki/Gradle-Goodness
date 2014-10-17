@@ -1,0 +1,66 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Renaming Files while Copying</h3>
+
+<div class="post">
+<p>With the Gradle copy task we can define renaming rules for the files that are copied. We use the <code>rename()</code> method of the copy task to define the naming rules. We can use a closure where the filename is the argument of the closure. The name we return from the closure is the new name of copied file. Or we can define a regular expression and set the replacement value for the corresponding regular expression. We can use groups in the regular expression and use them in the replacement value like <code>$&lt;group&gt;</code>.</p>
+<pre class="brush:groovy">
+task copyFiles(type: Copy) {
+    from 'src/files'
+    into "$buildDir/files"
+    rename '(.*)-(.*).html', '$2/$1.html'
+    rename ~/(.*).template.(.*)/, '$1.$2'
+    rename { filename ->
+        filename.replace 'java', 'groovy'
+    }
+}
+</pre>
+<p>Let's create some source files, so the renaming rules can be applied to them.</p>
+<p><code>src/files/index-en.html</code>:</p>
+<pre class="brush:plain;light:true">
+&lt;html&gt;
+    &lt;body&gt;
+        &lt;h1&gt;Hello Gradle&lt;/h1&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+<p><code>src/files/index-nl_NL.html</code>:</p>
+<pre class="brush:plain;light:true">
+&lt;html&gt;
+    &lt;body&gt;
+        &lt;h1&gt;Hallo Gradle&lt;/h1&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+<p><code>src/files/sample.template.txt</code>:</p>
+<pre class="brush:plain;light:true">
+Sample file.
+</pre>
+<p><code>src/files/Sample.java</code>:</p>
+<pre class="brush:plain;light:true">
+public class Sample {
+    private String gradle = "Gradle";
+}
+</pre>
+<p>We run <code>$ gradle copyFiles</code> and we get the following files in <code>build/files</code>:</p>
+<pre class="brush:plain;light:true">
+nl_NL
+ |
+ +-- index.html
+en
+ |
+ +-- index.html
+Sample.groovy
+sample.txt
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-renaming-files-while.html">Original blog post</a> written on October 25, 2010.
+</p>
+
+</body>
+</html>

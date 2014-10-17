@@ -1,0 +1,29 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Exclude Transitive Dependency from All Configurations</h3>
+
+<div class="post">
+<p>We can exclude transitive dependencies easily from specific configurations. To exclude them from all configurations we can use Groovy's spread-dot operator and invoke the <code>exclude()</code> method on each configuration. We can only define the group, module or both as arguments for the <code>exclude()</code> method.</p><p>The following part of a build file shows how we can exclude a dependency from all configurations:</p><pre class="brush:groovy">...
+configurations {
+    all*.exclude group: 'xml-apis', module: 'xmlParserAPIs'
+}
+
+// Equivalent to:
+configurations {
+    all.collect { configuration ->
+        configuration.exclude group: 'xml-apis', module: 'xmlParserAPIs'
+    }
+}
+...
+</pre><p><em>Written with Gradle 1.2</em></p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2012/10/gradle-goodness-exclude-transitive.html">Original blog post</a> written on October 23, 2012.
+</p>
+
+</body>
+</html>

@@ -1,0 +1,37 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Unpacking an Archive</h3>
+
+<div class="post">
+<p>To create an archive with Gradle is easy. We have several tasks like Zip, Tar, Jar, War and Ear to create a new archive. But there is no UnZip or UnTar to unpack an archive in Gradle. To unpack an archive we must use the Copy task and copy the contents of the archive to a specified destination directory. In Gradle we can use the <code>zipTree()</code> method to access the contents of an archive. So in our copy definition the source is the contents of the archive we access with the <code>zipTree()</code> method.</p><p>In the following build file we see a simple task to unzip a ZIP file with the name <code>dist.zip</code> in the directory <code>src/dists</code>. We unpack the contents to the directory <code>build/unpacked/dist</code>:</p><pre class="brush:groovy">task unzip(type: Copy) {
+    def zipFile = file('src/dists/dist.zip')
+    def outputDir = file("${buildDir}/unpacked/dist")
+
+    from zipTree(zipFile)
+    into outputDir
+}
+</pre><p>The good thing is that tasks of type Copy automatically support Gradle's incremental build support. This means that if the task has been executed once and the <code>dist.zip</code> file and output in the directory <code>build/unpacked/dist</code> has not change the task is up-to-date and isn't executed.</p><p>We get the following output if we run the task twice:</p><pre class="brush:plain;light:true">$ gradle unzip
+:unzip
+
+BUILD SUCCESSFUL
+
+Total time: 2.867 secs
+unzip mrhaki$ gradle unzip
+:unzip UP-TO-DATE
+
+BUILD SUCCESSFUL
+
+Total time: 2.606 secs
+$
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2012/06/gradle-goodness-unpacking-archive.html">Original blog post</a> written on June 20, 2012.
+</p>
+
+</body>
+</html>

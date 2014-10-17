@@ -1,0 +1,25 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Set Java Compiler Encoding</h3>
+
+<div class="post">
+<p>If we want to set an explicit encoding for the Java compiler in Gradle we can use the <code>options.encoding</code> property. For example we could add the following line to our Gradle build file to change the encoding for the <code>compileJava</code> task:</p><pre class="brush:groovy">apply plugin: 'java'
+
+compileJava.options.encoding = 'UTF-8'
+</pre><p>To set the encoding property on all compile tasks in our project we can use the <code>withType()</code> method on the <code>TaskContainer</code> to find all tasks of type <code>Compile</code>. Then we can set the encoding in the configuration closure:</p><pre class="brush:groovy">apply plugin: 'java'
+
+tasks.withType(Compile) {
+    options.encoding = 'UTF-8'
+}
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2012/06/gradle-goodness-set-java-compiler.html">Original blog post</a> written on June 18, 2012.
+</p>
+
+</body>
+</html>

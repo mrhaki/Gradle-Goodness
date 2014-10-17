@@ -1,0 +1,48 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Excluding Tasks for Execution</h3>
+
+<div class="post">
+<p>In Gradle we can create dependencies between tasks. But we can also exclude certain tasks from those dependencies. We use the command-line option <em>-x</em> or <em>--exclude-task</em> and specify the name of task we don't want to execute. Any dependencies of this task are also excluded from execution. Unless another task depends on the same task and is executed. Let's see how this works with an example:</p>
+<pre class="brush:groovy">
+task copySources << {
+    println 'Copy sources.'
+}
+
+task copyResources(dependsOn: copySources) << {
+    println 'Copy resources.'
+}
+
+task jar(dependsOn: [copySources, copyResources]) << {
+    println 'Create JAR.'
+}
+
+task deploy(dependsOn: [copySources, jar]) << {
+    println 'Deploy it.'
+}
+</pre>
+<p>We execute the <em>deploy</em> task:</p>
+<pre class="brush:plain;light:true">
+$ gradle -q deploy 
+Copy sources.
+Copy resources.
+Create JAR.
+Deploy it.
+</pre>
+<p>Now we exclude the <em>jar</em> task. Notice how the <em>copySources</em> task is still executed because of the dependency in the <em>deploy</em> task:</p>
+<pre class="brush:plain;light:true">
+$ gradle -q deploy -x jar
+Copy sources.
+Deploy it.
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-excluding-tasks-for.html">Original blog post</a> written on October 18, 2010.
+</p>
+
+</body>
+</html>

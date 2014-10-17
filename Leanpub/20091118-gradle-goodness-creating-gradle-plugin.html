@@ -1,0 +1,140 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Creating a Gradle Plugin</h3>
+
+<div class="post">
+<p>Caution: Applies to Gradle 0.8</p><p>A plugin for Gradle provides reusable build logic packaged as a unit. For example the Java plugin is already provided with Gradle and adds several tasks for working with Java code to a Gradle project. In this post we write our own plugin to add a custom task and a new method to a project. We create a new task <em>mkdirs</em> to create the source directories defined by plugins for a project. The code to create the directories is inspired by the <a href="http://docs.codehaus.org/display/GRADLE/Cookbook#Cookbook-Creatingsourceandresourcedirectories">Gradle Cookbook</a>. The task itself looks for a property <em>basePackageDir</em> and apppends it to the source directory names. Finally we add the method <code>makeDirs()</code> to the Gradle project.</p><p>How do we achieve this? First we start with a new project and create a <code>buildSrc</code> directory. The <code>buildSrc</code> directory contains the plugin code. Gradle will automatically compile the classes and add it to the project's classpath. To create a new Gradle plugin we define a class that implements the <a href="http://www.gradle.org/0.8/docs/javadoc/org/gradle/api/Plugin.html"><code>Plugin</code></a> interface. The interface only contains one method, <code>use()</code>, so that is simple. In the <code>use()</code> method we have access to the project object and plugins, so we can do a lot of things. For our sample we only have to create a new task and add it to the project:</p><pre class="brush:groovy">// File: buildSrc/src/main/groovy/com/mrhaki/gradle/MakeDirsPlugin.groovy
+package com.mrhaki.gradle
+
+import org.gradle.api.*
+import org.gradle.api.plugins.*
+
+class MakeDirsPlugin implements Plugin {
+
+    void use(final Project project, ProjectPluginsContainer plugins) {
+        // Closure to create a directory.
+        def createDirs = {
+            it.mkdirs()
+        }
+
+        // Create new task 'mkdirs' and add it to the project.
+        project.task('mkdirs') &lt;&lt; {
+            if (plugins.hasPlugin('java')) {
+                project.sourceSets.all.java.srcDirs*.each createDirs
+                project.sourceSets.all.resources.srcDirs*.each createDirs
+            }
+            
+            if (plugins.hasPlugin('groovy')) {
+                project.sourceSets.all.groovy.srcDirs*.each createDirs
+            }
+            
+            if (plugins.hasPlugin('scala')) {
+                project.sourceSets.all.scala.srcDirs*.each createDirs
+            }
+            
+            if (plugins.hasPlugin('war')) {
+                createDirs project.webAppDir
+            }
+        }
+        // Assign a description to the task.
+        project.tasks.mkdirs.description = "Create source directories."
+    }
+    
+}
+</pre><p>And that is all we need to do (for now). We create a <code>build.gradle</code> file to use our plugin:</p><pre class="brush:groovy">// File: build.gradle
+usePlugin(com.mrhaki.gradle.MakeDirsPlugin)
+</pre><p>When we ask Gradle for all available tasks we get our <em>mkdirs</em> task in the results:</p><pre class="brush:plain;light:true">$ gradle -t -q
+--------------------------------------------------------------
+Root Project
+--------------------------------------------------------------
+:mkdirs - Create source directories.
+</pre><p>We can stop now, but we also wanted to use a <em>basePackageDir</em> property and add the method <code>makeDirs()</code> to our project from the plugin. To add properties and methods by a plugin Gradle supports conventions. We create a new convention object with properties and methods and assign it to the project plugins map. Now all properties and methods from the convention object can directly be invoked and accessed from the build script. So we start by creating a convention object, which is just a plain GroovyBean class:</p><pre class="brush:groovy">// File: buildSrc/src/main/groovy/com/mrhaki/gradle/MakeDirsPluginConvention.groovy
+package com.mrhaki.gradle
+
+import org.gradle.api.*
+
+class MakeDirsPluginConvention {
+    String basePackageDir = ''  // Property to hold base package directory name.
+    Project project
+    
+    MakeDirsPluginConvention(Project project) {
+        this.project = project 
+    }
+    
+    // Method to create a new directory from the root of the project.
+    // (Inspired by mkdir in Java plugin)
+    File makeDirs(String dirName) {
+        if (!dirName) {
+            throw new InvalidUserDataException('You must specify a directory name')
+        }
+        if (!project) {
+            throw new InvalidUserDataException('You must specify a project')
+        }
+        def newDir = project.file(dirName)
+        newDir.mkdirs()
+        newDir
+    }
+}
+</pre><p>We change the code for the plugin to use the convention class:</p><pre class="brush:groovy;highlight:[9,10,11,12,16,17]">// File: buildSrc/src/main/groovy/com/mrhaki/gradle/MakeDirsPlugin.groovy
+package com.mrhaki.gradle
+
+import org.gradle.api.*
+import org.gradle.api.plugins.*
+
+class MakeDirsPlugin implements Plugin {
+
+    void use(final Project project, ProjectPluginsContainer plugins) {
+        // Assign new convention object to project.
+        // makedirs is a key for the plugins map. We can choose the name
+        // ourselves here.
+        project.convention.plugins.makedirs = new MakeDirsPluginConvention(project)
+    
+        // Closure to create a directory.
+        def createDirs = {
+            // Use basePackageDir property.
+            def newDir = new File(it, project.convention.plugins.makedirs.basePackageDir)
+            newDir.mkdirs()
+        }
+
+        // Create new task 'mkdirs' and add it to the project.
+        project.task('mkdirs') &lt;&lt; {
+            if (plugins.hasPlugin('java')) {
+                project.sourceSets.all.java.srcDirs*.each createDirs
+                project.sourceSets.all.resources.srcDirs*.each createDirs
+            }
+            
+            if (plugins.hasPlugin('groovy')) {
+                project.sourceSets.all.groovy.srcDirs*.each createDirs
+            }
+            
+            if (plugins.hasPlugin('scala')) {
+                project.sourceSets.all.scala.srcDirs*.each createDirs
+            }
+            
+            if (plugins.hasPlugin('war')) {
+                createDirs project.webAppDir
+            }
+        }
+        // Assign a description to the task.
+        project.tasks.mkdirs.description = "Create source directories."
+    }
+    
+}
+</pre><p>We change our build script to show the usage of our plugin:</p><pre class="brush:groovy">// File: build.gradle
+usePlugin(com.mrhaki.gradle.MakeDirsPlugin)
+usePlugin('war')  // Extra plugin so the task mkdirs from the plugin can do something.
+
+basePackageDir = 'com/mrhaki'  // Property from plugin convention object.
+makeDirs 'src/main/config' // Method from plugin convention object.
+</pre><p>We run the build with <code>$ gradle mkdirs</code> and all source directories are created including <code>src/main/config</code>. For example we now have the directory <code>src/main/java/com/mrhaki</code> in our project.</p><p>Because we created our plugin in the <code>buildSrc</code> directory the plugin is only available for this project. In a next blog post we see how we can reuse our plugin in other projects. We will package the code into a JAR file and upload to a repository. Other projects can define a dependency for our plugin in the repository and use it in the build process.</p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2009/11/gradle-goodness-creating-gradle-plugin.html">Original blog post</a> written on November 18, 2009.
+</p>
+
+</body>
+</html>

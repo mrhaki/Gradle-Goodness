@@ -1,0 +1,52 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Getting More Dependency Insight</h3>
+
+<div class="post">
+<p>In most of our projects we have dependencies on other code, like libraries or other projects. Gradle has a nice DSL to define dependencies. Dependencies are grouped in dependency configurations. These configuration can be created by ourselves or added via a plugin. Once we have defined our dependencies we get a nice overview of all dependencies in our project with the <code>dependencies</code> task. We can add the optional argument <code>--configuration</code> to only see dependencies for the given configuration. But we can even check for a specific dependency where it is used, any transitive dependencies and how the version is resolved.</p><p>In the following sample build we define a compile dependency on Spring Boot and SLF4J API. The SLF4J API is also a transitive dependency for the Spring Boot dependency, so we can see how the <code>dependencyInsight</code> tasks shows a version conflict.</p><pre class="brush:groovy">apply plugin: 'java'
+
+// Set Bintray JCenter as repository.
+repositories.jcenter()
+
+dependencies {
+    // Set dependency for Spring Boot
+    compile "org.springframework.boot:spring-boot-starter-web:1.1.5.RELEASE"
+    
+    // Set dependency for SLF4J with conflicting version.
+    compile 'org.slf4j:slf4j-api:1.7.1'
+}
+</pre><p>Now let's run the <code>dependencyInsight</code> task for the dependency SLF4J API in the compile configuration:</p><pre class="brush:plain;light:true">$ gradle -q dependencyInsight --configuration compile --dependency slf4j-api
+org.slf4j:slf4j-api:1.7.7 (conflict resolution)
++--- org.slf4j:jcl-over-slf4j:1.7.7
+|    \--- org.springframework.boot:spring-boot-starter-logging:1.1.5.RELEASE
+|         \--- org.springframework.boot:spring-boot-starter:1.1.5.RELEASE
+|              \--- org.springframework.boot:spring-boot-starter-web:1.1.5.RELEASE
+|                   \--- compile
++--- org.slf4j:jul-to-slf4j:1.7.7
+|    \--- org.springframework.boot:spring-boot-starter-logging:1.1.5.RELEASE (*)
+\--- org.slf4j:log4j-over-slf4j:1.7.7
+     \--- org.springframework.boot:spring-boot-starter-logging:1.1.5.RELEASE (*)
+
+org.slf4j:slf4j-api:1.7.1 -> 1.7.7
+\--- compile
+
+org.slf4j:slf4j-api:1.7.6 -> 1.7.7
+\--- ch.qos.logback:logback-classic:1.1.2
+     \--- org.springframework.boot:spring-boot-starter-logging:1.1.5.RELEASE
+          \--- org.springframework.boot:spring-boot-starter:1.1.5.RELEASE
+               \--- org.springframework.boot:spring-boot-starter-web:1.1.5.RELEASE
+                    \--- compile
+
+(*) - dependencies omitted (listed previously)
+</pre><p>In the output we can see slf4j-api is referenced three times, once as a transitive dependency for jcl-over-slf4j, jul-to-slf4j and log4j-over-slf4j, once as transitive dependency for logback-classic and once as a direct dependency for the compile configuration. We also see the version is bumped to 1.7.7 where necessary, because the transitive dependency of jcl-over-slf4j defines the newest version.</p><p>The value we use for the <code>--dependency</code> option is used to do partial matching in the group, name or version properties of the dependencies. For example to see an insight in all dependencies with logging we can invoke <code>$ gradle dependencyInsight --dependency logging</code>.</p><p>We can also get an HTML report page with an overview of all dependencies. To get dependency insight we must click on the desired dependency from the HTML page and we get a similar output as via the command-line. First we must add the project-report plugin to our project. Next we invoke the <code>dependencyReport</code> task. When the task is finished we can open <code>build/reports/project/dependencies/index.html</code> in our web browser. When we navigate to the compile configuration and click on the slf4j-api dependency we get the following output:</p><div class="separator" style="clear: both; text-align: center;"><a href="http://3.bp.blogspot.com/-z4i-cAiwLd4/U-jDa8yDR2I/AAAAAAAAJM4/hUhg4IIk0Lo/s1600/gradle-dep-insight.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" src="http://3.bp.blogspot.com/-z4i-cAiwLd4/U-jDa8yDR2I/AAAAAAAAJM4/hUhg4IIk0Lo/s400/gradle-dep-insight.png" /></a></div><p style="clear:both">Written with Gradle 2.0.</p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2014/08/gradle-goodness-getting-more-dependency.html">Original blog post</a> written on August 11, 2014.
+</p>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Changing the Gradle User Home Directory</h3>
+
+<div class="post">
+<p>We can change the Gradle user home directory in several ways. Gradle uses the directory <code>.gradle</code> in our home directory as the default Gradle user home directory. Here we can find for example the directory <code>caches</code> with downloaded dependencies. To change the Gradle user home directory we can set the environment variable <code>GRADLE_USER_HOME</code> and point it to another directory. The Gradle build script will look for this environment variable and then use the specified directory as the Gradle home directory.</p>
+<pre class="brush:plain;light:true">
+$ export GRADLE_USER_HOME=/Users/mrhaki/dev/gradle
+$ gradle -d -r
+07:36:40.020 [main] INFO  org.gradle.launcher.Main - Starting Builder
+07:36:40.120 [main] DEBUG org.gradle.launcher.Main - Gradle user home: /Users/mrhaki/dev/gradle
+...
+</pre>
+<p>But this is not the only way to change the Gradle user home directory. We can also pass the Java system property <code>gradle.user.home</code> to Gradle and specify a new directory. In the following sample we use the environment variable <code>GRADLE_OPTS</code> to pass the Java system property, but we could also use <code>JAVA_OPTS</code>.</p>
+<pre class="brush:plain;light:true">
+$ export GRADLE_OPTS=-Dgradle.user.home=/Users/mrhaki/dev/gradle
+$ gradle -d
+07:36:40.020 [main] INFO  org.gradle.launcher.Main - Starting Builder
+07:36:40.120 [main] DEBUG org.gradle.launcher.Main - Gradle user home: /Users/mrhaki/dev/gradle
+...
+</pre>
+<p>Or we can use the command-line options <code>-g</code> and <code>--gradle-user-home</code> when we run Gradle and use a different directory as a Gradle user home directory.</p>
+<pre class="brush:plain;light:true">
+$ gradle -g /Users/mrhaki/dev/gradle -d
+07:36:40.020 [main] INFO  org.gradle.launcher.Main - Starting Builder
+07:36:40.120 [main] DEBUG org.gradle.launcher.Main - Gradle user home: /Users/mrhaki/dev/gradle
+...
+</pre>
+<pre class="brush:plain;light:true">
+$ gradle --gradle-user-home=/Users/mrhaki/dev/gradle -d
+07:36:40.020 [main] INFO  org.gradle.launcher.Main - Starting Builder
+07:36:40.120 [main] DEBUG org.gradle.launcher.Main - Gradle user home: /Users/mrhaki/dev/gradle
+...
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/09/gradle-goodness-changing-gradle-user.html">Original blog post</a> written on September 08, 2010.
+</p>
+
+</body>
+</html>

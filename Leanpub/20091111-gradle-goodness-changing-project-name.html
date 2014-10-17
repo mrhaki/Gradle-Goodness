@@ -1,0 +1,40 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Changing the Project Name</h3>
+
+<div class="post">
+<p>By default the name of our Gradle project is the name of the directory the project is created in. We can check this by running the following command:</p>
+<pre class="brush:shell;light:true">
+$ gradle -r | grep name
+name: project
+</pre>
+<p>The first place we think of to change the project name is <code>build.gradle</code>, because that is also the file we can change for example the version property of our project:</p>
+<pre class="brush:groovy;light:true">
+name = 'newProjectName'
+</pre>
+<p>When we run gradle we get an error:</p>
+<pre class="brush:plain;light:true">
+* What went wrong:
+A problem occurred evaluating root project 'project'.
+Cause: Cannot set the value of read-only property 'name' on root project 'project'.
+</pre>
+<p>So what can we do? We must create a file <code>settings.gradle</code> and set the property <code>rootProject.name</code>:</p>
+<pre class="brush:groovy;light:true">
+rootProject.name = 'newProjectName'
+</pre>
+<p>We can check the name of our project has changed by running the following command again:</p>
+<pre class="brush:shell;light:true">
+$ gradle -r | grep name
+name: newProjectName
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2009/11/gradle-goodness-changing-project-name.html">Original blog post</a> written on November 11, 2009.
+</p>
+
+</body>
+</html>

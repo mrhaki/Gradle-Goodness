@@ -1,0 +1,49 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Display Gradle Information in the Build</h3>
+
+<div class="post">
+<p>In a Gradle build script we can access properties from Gradle and the project itself. To access the <code><a href="http://www.gradle.org/0.8/docs/javadoc/org/gradle/api/invocation/Gradle.html">Gradle</a></code> object we use the <code>gradle</code> property. Properties of the <code><a href="http://www.gradle.org/0.8/docs/javadoc/org/gradle/api/Project.html">Project</a></code> instance can be accessed directly in our script. We can use this information to display an information message each time we run the build script. Let's make it look like something we also see when we run Grails:</p>
+<pre class="brush:groovy">
+// File: build.gradle
+println """\
+Welcome to Gradle $gradle.gradleVersion - http://www.gradle.org
+Gradle home is set to: $gradle.gradleHomeDir
+Gradle user directory is set to: $gradle.gradleUserHomeDir
+
+Base directory: $projectDir
+Running script ${relativePath(buildFile)}
+"""
+</pre>
+<p>If we run the gradle we get to see the information:</p>
+<pre class="brush:plain;light:true">
+$ gradle -t
+Welcome to Gradle 0.8 - http://www.gradle.org
+Gradle home is set to: D:\java\gradle\gradle-0.8
+Gradle user directory is set to: C:\Documents and Settings\mrhaki\.gradle
+
+Base directory is: D:\mrhaki\data\projects\mrhaki.com\blog\posts\samples\info
+Running script build.gradle
+
+:reportTask
+
+---------------------------------------------------------
+Root Project
+---------------------------------------------------------
+No tasks
+
+BUILD SUCCESSFUL
+
+Total time: 1.484 secs
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2009/11/gradle-goodness-display-gradle.html">Original blog post</a> written on November 16, 2009.
+</p>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Using Properties for Multiple Environments or Profiles</h3>
+
+<div class="post">
+<p>A Gradle build script is a Groovy script, and this means we can use all classes available to Groovy in our Gradle build scripts. In this post we use the <a href="http://mrhaki.blogspot.com/2009/10/groovy-goodness-using-configslurper.html"><code>ConfigSlurper</code></a> to read in properties for our project. The <code>ConfigSlurper</code> supports environments where we can define values for properties per environment. Suppose we have a dev, test and prod environment than we can define different values for the same property per environment. We can also override a default value in the environments section.</p>
+<p>In our Gradle build script we look for a property <em>env</em>. We can pass a value for the <em>env</em> property to the build with the <code>-P</code> or <code>--project-prop</code> argument when we run Gradle. If the property is available we use the value to read in the properties for that environment. If the <em>env</em> property is not available we assume the default <em>dev</em> environment. Finally we assign the <code>Config</code> object (with all properties) returned by the <code>ConfigSlurper</code> to the project property <em>config</em>. In the Gradle build script we can access the properties with dotted notation: <code>config.propName</code>.</p>
+<pre class="brush:groovy">
+// File: build.gradle
+loadConfiguration()
+
+task printProps &lt;&lt; {
+    println "serverName:  $config.serverName"
+    println "mail.server: $config.mail.server"
+    println "mail.port:   $config.mail.port"
+}
+
+def loadConfiguration() {
+    def environment = hasProperty('env') ? env : 'dev'
+    setProperty 'environment', environment
+    println "Environment is set to $environment"
+    
+    def configFile = file('config.groovy')
+    def config = new ConfigSlurper(environment).parse(configFile.toURL())
+    setProperty 'config', config
+}
+</pre>
+<pre class="brush:groovy">
+// File: config.groovy
+mail {
+    server = 'localhost'
+    port = 25
+}
+
+environments {
+    dev {
+        serverName = 'http://localhost:9090'        
+    }
+    
+    test {
+        serverName = 'http://testserver'
+        mail {
+            server = 'mail.testserver'
+        }
+    }
+    
+    prod {
+        serverName = 'http://www.mrhaki.com'
+        mail {
+            port = 552
+            server = 'mail.host.com'
+        }
+    }
+}
+</pre>
+<p>We run Gradle with different values for the <em>env</em> property to see the values of the properties:</p>
+<pre class="brush:plain;light:true">
+$ gradle -q printProps
+Environment is set to dev
+serverName:  http://localhost:9090
+mail.server: localhost
+mail.port:   25
+
+$ gradle -q -Penv=dev printProps
+Environment is set to dev
+serverName:  http://localhost:9090
+mail.server: localhost
+mail.port:   25
+
+$ gradle -q -Penv=test printProps
+Environment is set to test
+serverName:  http://testserver
+mail.server: mail.testserver
+mail.port:   25
+
+$ gradle -q -Penv=prod printProps
+Environment is set to prod
+serverName:  http://www.mrhaki.com
+mail.server: mail.host.com
+mail.port:   552
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2009/11/gradle-goodness-using-properties-for.html">Original blog post</a> written on November 17, 2009.
+</p>
+
+</body>
+</html>

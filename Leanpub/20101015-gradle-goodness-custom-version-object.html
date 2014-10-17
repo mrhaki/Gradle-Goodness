@@ -1,0 +1,48 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Custom Version Object</h3>
+
+<div class="post">
+<p>The project version in a Gradle project is not limited to a String value, but can be any Object. We must implement the <code>toString()</code> method of the object so Gradle can use it for example in naming JAR files.</p>
+<p>In the following build script we define a custom <code>Version</code> class. We create an instance of the <code>Version</code> class and assign it to the project version. In the task <em>listJars</em> we print out the project version and the name of the generated JAR file, which should contain our custom version number.</p>
+<pre class="brush:groovy">
+apply plugin: 'java'
+
+version = new Version(major: 2, minor: 3, releaseType: 'beta', bugfix: 2)
+
+task listJars &lt;&lt; {
+    println "Project version: $project.version"
+    configurations.archives.allArtifactFiles.files.each {
+        println "Artifact: $it.name"
+    }
+}
+listJars.dependsOn 'assemble'
+
+class Version {
+    int major
+    int minor
+    int bugfix
+    String releaseType
+ 
+    String toString() {
+        "$major.$minor-$releaseType${bugfix ?: ''}"
+    }
+}
+</pre>
+<p>We can run our script and get the following output:</p>
+<pre class="brush:plain;light:true">
+$ gradle -q listJars
+Project version: 2.3-beta2
+Artifact: gradle-2.3-beta2.jar
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-custom-version-object.html">Original blog post</a> written on October 15, 2010.
+</p>
+
+</body>
+</html>

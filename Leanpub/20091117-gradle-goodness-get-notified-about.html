@@ -1,0 +1,48 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Get Notified About Finished Build with Snarl</h3>
+
+<div class="post">
+<p>We can add a listener to the Gradle build process to get informed about certain events during the build process. We must implement the <a href="http://www.gradle.org/0.8/docs/javadoc/org/gradle/BuildListener.html"><code>BuildListener</code></a> interface and add it to a Gradle instance. One of the methods is the <code>buildFinished()</code> method. We write an implementation for this method to display the build result as a <a href="http://www.fullphat.net/index.php">Snarl</a> notification (Snarl is a Windows equivalent of Growl in OSX). The <a href="http://www.gradle.org/0.8/docs/javadoc/org/gradle/BuildAdapter.html"><code>BuildAdapter</code></a> class provides an empty implementation for the <code>BuildListener</code> interface and is a good starting point for our implementation.</p>
+<p>We can add the code to our <code>build.gradle</code> file for a project. But we want to create the listener and use it for all our Gradle builds. We create the file <code>init.gradle</code> and place it in the <code>~/.gradle</code> directory. Gradle will invoke this script always when we invoke a Gradle build, so every project we build with Gradle will use this code.</p>
+<pre class="brush:groovy">
+// File: ~/.gradle/init.gradle
+class SnarlNotifyListener extends BuildAdapter {
+    void buildFinished(BuildResult result) {
+        if (result.failure) {
+            snarlNotify 'Gradle build failure', result.failure.message, true
+        } else {
+            snarlNotify 'Gradle build finished', 'Build successful'
+        }
+    }
+
+    void snarlNotify(title, message = 'No message', sticky = false) {
+        def cmd = [
+            '&lt;Path to Snarl_CMD.exe&gt;',  // Replace with your local path.
+            'snShowMessage',
+            sticky ? '0' : '10',  // If non-sticky display for 10 seconds.
+            title,
+            message,
+            '&lt;gradle_home&gt;/docs/groovydoc/groovy.ico'  // Nice little icon, use local path.
+        ]
+        cmd.execute()
+    }    
+}
+
+def listener = new SnarlNotifyListener()
+gradle.addBuildListener listener
+</pre>
+<p>Now we can run a Gradle build and we get nice notifications when the build is finished:</p>
+<a onblur="try {parent.deselectBloggerImageGracefully();} catch(e) {}" href="http://1.bp.blogspot.com/_-vJw6r2W-bw/SwMfk92YLTI/AAAAAAAADJc/lgE2M-D6Jkw/s1600/blog-gradle-notify-fail.png"><img style="display:block; margin:0px auto 10px; text-align:center;cursor:pointer; cursor:hand;width: 287px; height: 81px;" src="http://1.bp.blogspot.com/_-vJw6r2W-bw/SwMfk92YLTI/AAAAAAAADJc/lgE2M-D6Jkw/s320/blog-gradle-notify-fail.png" border="0" alt=""id="BLOGGER_PHOTO_ID_5405198697713118514" /></a>
+<a onblur="try {parent.deselectBloggerImageGracefully();} catch(e) {}" href="http://1.bp.blogspot.com/_-vJw6r2W-bw/SwMfk1zM82I/AAAAAAAADJU/v1Ug4XY54Dg/s1600/blog-gradle-notify-success.png"><img style="display:block; margin:0px auto 10px; text-align:center;cursor:pointer; cursor:hand;width: 289px; height: 80px;" src="http://1.bp.blogspot.com/_-vJw6r2W-bw/SwMfk1zM82I/AAAAAAAADJU/v1Ug4XY54Dg/s320/blog-gradle-notify-success.png" border="0" alt=""id="BLOGGER_PHOTO_ID_5405198695552316258" /></a
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2009/11/gradle-goodness-get-notified-about.html">Original blog post</a> written on November 17, 2009.
+</p>
+
+</body>
+</html>

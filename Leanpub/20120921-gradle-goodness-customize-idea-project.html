@@ -1,0 +1,129 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Customize IDEA Project File Generation</h3>
+
+<div class="post">
+<p>With the Gradle IDEA plugin we can generate JetBrains IntelliJ IDEA project files. The plugin uses defaults from our project to generate the files. If we also apply the Java plugin to our project then the Java settings for the project files are generated. We can customize the file generation in several ways. The most low level method is using the <code>withXml</code> hook. With this hook we have access to the XML before the file is written to disk. Here we can add or change XML elements and attribute values.</p><p>We use a closure as argument for the <code>withXml</code> hook and Gradle adds a <code>XmlProvider</code> object as argument. The easiest way to manipulate the XML is getting a <code>groovy.util.Node</code> from the <code>XmlProvider</code>. We also can get a DOM Element or <code>StringBuilder</code> to work with.</p><p>In the following example build file we change the contents of the IDEA project file (with extension <code>.ipr</code>). We change the output directory of the JavaDoc tool. We use Groovy syntax to find the <em>JavadocGenerationManager</em> which is automatically added, because we have the Java plugin in our build file. We also change the <em>Encoding</em> component or create it when it doesn't exist:</p><pre class="brush:groovy">apply plugin: 'java'
+apply plugin: 'idea'
+
+idea {
+    project {
+        // Here we customize the .ipr file generation.
+        ipr {
+            // XML hook to customize the XML before
+            // it is written to disk
+            withXml { xmlProvider ->
+                // Get root node.
+                def project = xmlProvider.asNode()
+
+                customizeJavaDoc project
+                customizeEncoding project
+            }
+        }
+    }
+}
+
+/* Customize JavadocGenerationManger component */
+def customizeJavaDoc(project) {
+    def javaDocGenerationManager = findComponent(project, 'JavadocGenerationManager')
+    changeOption javaDocGenerationManager, 'OUTPUT_DIRECTORY', '$PROJECT_DIR$/out/javadoc'
+}
+
+/* Search component with given name */
+def findComponent(project, name) {
+    project.component.find { it.@name == name }
+}
+
+/* Set value for option node with given name */
+def changeOption(node, name, value) {
+    node.option.find { it.@name == name }.@value = value
+}
+
+/* Customize Encoding component */
+def customizeEncoding(project) {
+    def encoding = findComponent(project, 'Encoding')
+
+    if (encoding) {
+        // Change existing node.
+        encoding.@useUTFGuessing = true
+        encoding.@native2AsciiForPropertiesFiles = true
+        encoding.@defaultCharsetForPropertiesFiles = 'UTF-8'
+    } else {
+        // Create new node with default values.
+        project.appendNode 'Encoding', [useUTFGuessing: true, native2AsciiForPropertiesFiles: true, defaultCharsetForPropertiesFiles: 'UTF-8']
+    }
+}
+</pre><p>To add a XML structure we can use Groovy's <code>NodeBuilder</code>. With the <code>NodeBuilder</code> we use builder syntax to define the structure. The result is a <code>Node</code> object that we can use to insert in the XML that is used to generate the IDEA project file. In the following example <code>build.gradle</code> file we create a new inspection profile with a customized <em>Spelling</em> inspection:</p><pre class="brush:groovy">apply plugin: 'java'
+apply plugin: 'idea'
+
+idea {
+    project {
+        // Here we customize the .ipr file generation.
+        ipr {
+            // XML hook to customize the XML before
+            // it is written to disk
+            withXml { xmlProvider ->
+                // Get root node.
+                def project = xmlProvider.asNode()
+                customizeSpellingInspection(project)
+            }
+        }
+    }
+}
+
+/* Change or add spelling inspection */
+def customizeSpellingInspection(project) {
+    def inspections = findComponent(project, 'InspectionProjectProfileManager')
+    
+    if (inspections) {
+        // Update existing profiles to disable spell checking
+        // for processCode and processLiterals.
+        def spellChecking = inspections.profiles.profile.option.inspection_tool.find { it.@class == 'SpellCheckingInspection'}
+        if (spellChecking) {
+            ['processCode', 'processLiterals'].each { optionName ->
+                spellChecking.option.find { it.@name == optionName }.@value = 'false'
+            }
+        }
+    } else {
+        // Create new InspectionProjectProfileManager component. 
+        inspections = project.appendNode('component', [name: 'InspectionProjectProfileManager'])
+
+        // Use NodeBuilder to build profiles XML structure.
+        def builder = new NodeBuilder()
+        def profiles = builder.profiles {
+            profile(version: '1.0', is_locked: false) {
+                option(name: 'myName', value: 'Default Inspections')
+                option(name: 'myLocal', value: false)
+                inspection_tool(class: 'SpellCheckingInspection', enabled: true, level: 'TYPO', enabled_by_default: true) {
+                    option(name: 'processCode', value: false)
+                    option(name: 'processLiterals', value: false)
+                    option(name: 'processComments', value: true)
+                }
+            }
+        }
+        // Add result from NodeBuilder
+        inspections.append profiles
+
+        // Extra nodes added with appendNode() method.
+        inspections.appendNode 'option', [name: 'PROJECT_PROFILE', value: 'Default Inspections']
+        inspections.appendNode 'option', [name: 'USE_PROJECT_PROFILE', value: true]
+        inspections.appendNode 'version', [value: "1.0"]
+    }
+}
+
+/* Search component with given name */
+def findComponent(project, name) {
+    project.component.find { it.@name == name }
+}
+</pre><p><em>(Gradle 1.2 is used for samples)</em></p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2012/09/gradle-goodness-customize-idea-project.html">Original blog post</a> written on September 21, 2012.
+</p>
+
+</body>
+</html>

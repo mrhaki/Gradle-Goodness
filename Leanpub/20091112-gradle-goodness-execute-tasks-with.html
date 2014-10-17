@@ -1,0 +1,41 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Execute Tasks with Abbreviations</h3>
+
+<div class="post">
+<p>Gradle supports task name abbreviation to execute tasks. This means we only have to type the portion of a task name that uniquely identifies the task within the project. So we don't have to type the complete name if we can use a shorter version. As a bonus Gradle also supports camel case to abbreviate a task name.</p>
+<p>Suppose we have the following build file for our project:</p>
+<pre class="brush:groovy">
+// File: build.gradle
+task helloWorld &lt;&lt; { ant.echo 'Hello world.' }
+</pre>
+<p>The following statements will all invoke this task:</p>
+<pre class="brush:shell">
+$ gradle helloWorld
+$ gradle hello
+$ gradle h
+$ gradle hW
+</pre>
+<p>If the abbreviation is not unique for the project we get a warning from Gradle. For example if we have the tasks <em>hello</em>, <em>helloTask</em> and <em>helloWorld</em> and execute <code>$ gradle h</code> we get a failure message:</p>
+<pre class="brush:plain;light:true">
+FAILURE: Could not determine which task to execute.
+
+* What went wrong:
+Task 'h' is ambigious in root project 'project'. Candidates are: 'hello', 'helloWorld', 'helloTask'.
+
+* Try:
+Run with -t to get a list of available tasks.
+
+BUILD FAILED
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2009/11/gradle-goodness-execute-tasks-with.html">Original blog post</a> written on November 12, 2009.
+</p>
+
+</body>
+</html>

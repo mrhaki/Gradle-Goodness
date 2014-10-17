@@ -1,0 +1,52 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Parse Files with SimpleTemplateEngine in Copy Task</h3>
+
+<div class="post">
+<p>With the copy task of Gradle we can copy files that are parsed by Groovy's SimpleTemplateEngine. This means we can expand properties in the source file and add Groovy code that is going to be executed. We must use the <code>expand()</code> method in the copy task where we can pass properties to be used in the source file.</p>
+<pre class="brush:groovy">
+version = 'DEMO'
+group = 'com.mrhaki'
+
+task copy(type: Copy) {
+    from 'src/templates'
+    into "$buildDir"
+    include 'projectinfo.html.template'
+    rename { file -&gt; 'projectinfo.html' }
+    expand(project: project, title: 'ProjectInfo', generated: new Date())
+}
+</pre>
+<p>We define the following source file in <code>src/templates/projectinfo.html.template</code>:</p>
+<pre class="brush:html">
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;${title}&lt;/title&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;h1&gt;${project.name}&lt;/h1&gt;
+
+        &lt;ul&gt;
+        &lt;% project.properties.findAll { k,v -&gt; v instanceof String }.each { key, value -&gt; %&gt;
+            &lt;li&gt;$key = $value&lt;/li&gt;
+        &lt;% } %&gt;
+        &lt;/ul&gt;
+
+        &lt;hr /&gt;
+        &lt;p&gt;Generated on ${generated.format('dd-MM-yyyy')}&lt;/p&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+<p>When we run the copy task we get the following output:</p>
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://3.bp.blogspot.com/_-vJw6r2W-bw/TMHwjJv8IoI/AAAAAAAAEG4/B314CTuHh6I/s1600/Screen+shot+2010-10-22+at+10.12.14+PM.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" src="http://3.bp.blogspot.com/_-vJw6r2W-bw/TMHwjJv8IoI/AAAAAAAAEG4/B314CTuHh6I/s1600/Screen+shot+2010-10-22+at+10.12.14+PM.png" /></a></div
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-parse-files-with.html">Original blog post</a> written on October 22, 2010.
+</p>
+
+</body>
+</html>

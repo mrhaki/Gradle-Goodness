@@ -1,0 +1,107 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Show Standard Out or Error Output from Tests</h3>
+
+<div class="post">
+<p>We use the <code>Test</code> task in Gradle to run tests. If we use the <code>System.out.println</code> or <code>System.err.println</code> methods in our test we don't see the output when we execute the tests. We can customize the test task to show any output send to standard out or error in the Gradle output.</p><p>First we show our test class written with Spock, but it could also be a JUnit or TestNG test:</p><pre class="brush:groovy">// File: src/test/groovy/com/mrhaki/gradle/SampleSpec.groovy
+package com.mrhaki.gradle
+
+import spock.lang.*
+
+class SampleSpec extends Specification {
+
+    def "check that Gradle is Gr8"() {
+        when:
+        def value = 'Gradle is great!'
+
+        then:
+        // Include a println statement, so
+        // we have output to show.
+        println "Value = [$value]"
+        value == 'Gradle is great!'
+    }
+
+}
+</pre><p>Now we write a simple Gradle build file which can execute our test:</p><pre class="brush:groovy">// File: build.gradle
+apply plugin: 'groovy' // Adds test task
+
+repositories.jcenter()
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.3.7'
+    testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+}
+</pre><p>Let's run the <code>test</code> task from the command line and look at the output:</p><pre class="brush:plain;light:true;">$ gradle test
+:compileJava UP-TO-DATE
+:compileGroovy UP-TO-DATE
+:processResources UP-TO-DATE
+:classes UP-TO-DATE
+:compileTestJava
+:compileTestGroovy
+:processTestResources UP-TO-DATE
+:testClasses
+:test
+
+BUILD SUCCESSFUL
+
+Total time: 7.022 secs
+$
+</pre><p>Well at least our test is successful, but we don't see the output of our <code>println</code> method invocation in the test. We customize the <code>test</code> task and add the <code>testLogging</code> method with a configuration closure. In the closure we set the property <code>showStandardStreams</code> to the value <code>true</code>. Alternatively we can set the <code>events</code> property or use the <code>events</code> method with the values <code>standard_out</code> and <code>standard_err</code> to achieve the same result. In the next build file we use the <code>showStandardStreams</code> property:</p><pre class="brush:groovy">// File: build.gradle
+apply plugin: 'groovy' // Adds test task
+
+repositories.jcenter()
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.3.7'
+    testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+}
+
+test {
+    testLogging {
+        // Make sure output from 
+        // standard out or error is shown
+        // in Gradle output.
+        showStandardStreams = true
+
+        // Or we use events method:
+        // events 'standard_out', 'standard_error'
+
+        // Or set property events:
+        // events = ['standard_out', 'standard_error']
+
+        // Instead of string values we can
+        // use enum values:
+        // events org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_OUT,
+        //        org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_ERROR,
+    }
+}
+</pre><p>We re-run the <code>test</code> task from the command line and look at the output to see the result from the <code>println</code> method:</p><pre class="brush:plain;light:true">$ gradle test
+:compileJava UP-TO-DATE
+:compileGroovy UP-TO-DATE
+:processResources UP-TO-DATE
+:classes UP-TO-DATE
+:compileTestJava
+:compileTestGroovy
+:processTestResources UP-TO-DATE
+:testClasses
+:test
+
+com.mrhaki.gradle.SampleSpec > check that Gradle is Gr8 STANDARD_OUT
+    Value = [Gradle is great!]
+
+BUILD SUCCESSFUL
+
+Total time: 8.716 secs
+$
+</pre><p>Written with Gradle 2.1.</p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2014/10/gradle-goodness-show-standard-out-or.html">Original blog post</a> written on October 15, 2014.
+</p>
+
+</body>
+</html>

@@ -1,0 +1,27 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Shortcut Notation for Dependencies</h3>
+
+<div class="post">
+<p>In a Gradle build script we define dependencies with the <code>dependencies</code> method. We can use a map notation or the short string notation. The string notation is the following format: <em>group:name:version</em>.</p>
+<pre class="brush:groovy">
+dependencies {
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.4'  // Map notation.
+    compile(
+        [group: 'commons-lang', name: 'commons-lang', version: '2.4'],
+        [group: 'commons-io', name: 'commons-io', version: '1.4']
+    )  // Multiple map notation.
+    compile 'commons-lang:commons-lang:2.4', 'commons-io:commons-io:1.4'  // String notation.
+}
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2009/11/gradle-goodness-shortcut-notation-for.html">Original blog post</a> written on November 17, 2009.
+</p>
+
+</body>
+</html>

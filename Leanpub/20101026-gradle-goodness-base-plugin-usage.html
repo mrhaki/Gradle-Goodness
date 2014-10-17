@@ -1,0 +1,109 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Base Plugin Usage</h3>
+
+<div class="post">
+<p>Gradle has plugins to provide functionality in a modularized way. One of the basic plugins is the base plugin. This plugin is not part of the public API of Gradle, so the functionality can change. In this post we look at what functionality the base plugin provides for Gradle version 0.9-rc1.</p>
+<p>When we apply the base plugin to our project we get a couple of tasks we can use:</p>
+<dl>
+    <dt><em>assemble</em></dt>
+    <dd>task that builds all archives of the project.</dd>
+    <dt><em>clean</em></dt>
+    <dd>task that deletes the build directory.</dd>
+</dl>
+<br />
+<p>We get two configurations:</p>
+<dl>
+    <dt><em>archives</em></dt>
+    <dd>configuration for archives.</dd>
+    <dt><em>default</em></dt>
+    <dd>extends archives configuration.</dd>
+</dl>
+<br />
+<p>For each configuration we get a build and upload task:</p>
+<dl>
+    <dt><em>buildArchives</em> and <em>buildDefault</em></dt>
+    <dd>builds all artifacts for the configuration.</dd>
+    <dt><em>uploadArchives</em> and <em>uploadDefault</em></dt>
+    <dd>upload artifacts for the configuration.</dd>
+</dl>
+<br />
+<p>And we get a task rule <em>clean&lt;taskname&gt;</em> that is capable of cleaning the ouput files of any task we create in our project.</p>
+<p>Also the following properties are added to the project:</p>
+<dl>
+    <dt><em>distDirName</em></dt>
+    <dd>directory to store archives created by the project.</dd>
+    <dt><em>libsDirName</em></dt>
+    <dd>directory to store JAR files created by the project.</dd>
+    <dt><em>archivesBaseName</em></dt>
+    <dd>base name for archives.</dd>
+</dl>
+<br />
+<p>In the following sample we define a project with the base plugin and use the tasks, configurations and properties that are added by the plugin:</p>
+<pre class="brush:groovy">
+apply plugin: 'base'
+
+version = '1.0'
+
+archivesBaseName = 'sample'
+distsDirName = 'dist'
+libsDirName = 'projectlibs'
+
+task simpleJar(type: Jar)
+
+task simpleZip(type: Zip)
+
+artifacts {
+    archives simpleJar
+}
+
+repositories {
+    flatDir name: 'localRepo', dirs: "$buildDir/repository"
+}
+
+uploadArchives {
+    repositories {
+        add project.repositories.localRepo
+    }
+}
+</pre>
+<p>Let's run gradle with a couple of the tasks:</p>
+<pre class="brush:plain;light:true">
+$ gradle clean assemble buildDefault uploadArchives cleanSimpleJar
+:clean
+:simpleJar
+:simpleZip
+:assemble
+:buildDefault
+:uploadArchives
+:cleanSimpleJar
+
+BUILD SUCCESSFUL
+
+Total time: 3.416 secs
+</pre>
+<p>If we look in the <code>build</code> directory we see what is created:</p>
+<pre class="brush:plain;light:true">
+build
+  |
+  +- dist
+  |    |
+  |    +- sample-1.0.zip
+  |
+  +- projectlibs
+  |
+  +- repository
+       |
+       +- sample-1.0.jar
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-base-plugin-usage.html">Original blog post</a> written on October 26, 2010.
+</p>
+
+</body>
+</html>

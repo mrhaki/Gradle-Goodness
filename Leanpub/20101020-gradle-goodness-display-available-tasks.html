@@ -1,0 +1,111 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Display Available Tasks</h3>
+
+<div class="post">
+<p>To see which tasks are available for our build we can run Gradle with the command-line option <em>-t</em> or <em>--tasks</em>. Gradle outputs the available tasks from our build script. By default only the tasks which are dependencies on other tasks are shown. To see all tasks we must add the command-line option <em>--all</em>.</p>
+<pre class="brush:groovy">
+3.times { counter ->
+    task "lib$counter" {
+        description = "Build lib$counter"
+        if (counter > 0) {
+            dependsOn = ["lib${counter - 1}"]
+        }
+    }
+} 
+
+task compile {
+    dependsOn { 
+        project.tasks.findAll { 
+            it.name.startsWith('lib')
+        }
+    }
+    description = "Compile sources"
+}
+</pre>
+<pre class="brush:plain;light:true">
+$ gradle -q -t
+
+------------------------------------------------------------
+Root Project
+------------------------------------------------------------
+
+Tasks
+-----
+:compile - Compile sources
+</pre>
+<pre class="brush:plain;light:true">
+$ gradle -q --tasks -all
+
+------------------------------------------------------------
+Root Project
+------------------------------------------------------------
+
+Tasks
+-----
+:compile - Compile sources
+    :lib0 - Build lib0
+    :lib1 - Build lib1
+    :lib2 - Build lib2
+</pre>
+<p>But if we <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-group-similar-tasks.html">add our tasks to a group</a>, we get even more verbose output. Gradle will group the tasks together and without the <em>--all</em> option we get to see all tasks belonging to the group, even those that are dependency tasks. And with the <em>--all</em> option we see for each task on which tasks it depends on. So by setting the <em>group</em> property on the task we get much better output when we ask Gradle about the available tasks.</p>
+<pre class="brush:groovy;highlight:[18]">
+3.times { counter ->
+    task "lib$counter" {
+        description = "Build lib$counter"
+        if (counter > 0) {
+            dependsOn = ["lib${counter - 1}"]
+        }
+    }
+} 
+
+task compile {
+    dependsOn { 
+        project.tasks.findAll { 
+            it.name.startsWith('lib')
+        }
+    }
+    description = "Compile sources"
+}
+
+tasks*.group = 'Compile'
+</pre>
+<pre class="brush:plain;light:true">
+$ gradle -q -t
+
+------------------------------------------------------------
+Root Project
+------------------------------------------------------------
+
+Compile tasks
+-------------
+:compile - Compile sources
+:lib0 - Build lib0
+:lib1 - Build lib1
+:lib2 - Build lib2
+</pre>
+<pre class="brush:plain;light:true">
+$ gradle -q --tasks -all
+
+------------------------------------------------------------
+Root Project
+------------------------------------------------------------
+
+Compile tasks
+-------------
+:compile - Compile sources [:lib0, :lib1, :lib2]
+:lib0 - Build lib0
+:lib1 - Build lib1 [:lib0]
+:lib2 - Build lib2 [:lib1]
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-display-available-tasks.html">Original blog post</a> written on October 20, 2010.
+</p>
+
+</body>
+</html>

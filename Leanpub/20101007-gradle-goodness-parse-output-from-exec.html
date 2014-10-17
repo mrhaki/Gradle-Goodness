@@ -1,0 +1,45 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Parse Output from Exec Invocation</h3>
+
+<div class="post">
+<p>We can run executable commands from Gradle build scripts with the <code>exec()</code> method. We pass a closure with the name of the executable and arguments to the method. The executable is than executed with the given arguments and we get a <code>ExecResult</code> object back. If we want to grap the output from the executable and use it for example to do some parsing we can assign a custom outputstream to the executable. The output of the executable is than written to our outputstream and when the process is finished we can manipulate the content of the outputstream.</p>
+<p>In the following sample script we invoke <code>svn info</code> to get Subversion information. We parse the output and get the last revision number from the output.</p>
+<pre class="brush:groovy">
+// File: build.gradle
+task svninfo &lt;&lt; {
+    new ByteArrayOutputStream().withStream { os ->
+        def result = exec {
+            executable = 'svn'
+            args = ['info']
+            standardOutput = os
+        }
+        def outputAsString = os.toString()
+        def matchLastChangedRev = outputAsString =~ /Last Changed Rev: (\d+)/
+        println "Latest Changed Revision #: ${matchLastChangedRev[0][1]}"
+    }
+}
+
+// Example output for svn info:
+// Path: .
+// URL: http://svn.host/svn/project
+// Repository Root: http://svn.host/svn/
+// Repository UUID: 9de3ae54-a9c2-4644-a1a1-838cb992bc8e
+// Revision: 33
+// Node Kind: directory
+// Schedule: normal
+// Last Changed Author: mrhaki
+// Last Changed Rev: 33
+// Last Changed Date: 2010-09-03 14:25:41 +0200 (Fri, 03 Sep 2010)
+</pre
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-parse-output-from-exec.html">Original blog post</a> written on October 07, 2010.
+</p>
+
+</body>
+</html>

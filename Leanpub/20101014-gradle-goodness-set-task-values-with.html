@@ -1,0 +1,106 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Set Task Values with Project Convention</h3>
+
+<div class="post">
+<p>In a <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-add-incremental-build_14.html">previous post</a> we wrote a custom task to generate a file with version information. When we created the task in our build file we had to provide values for the task properties <em>version</em> and <em>outputFile</em>. Now we want these values to have default values and we want to be able to set values with project properties instead of only task properties.</p>
+<p>First we write a plugin where we create a new Plain Old Groovy Object (POGO) which will store the project properties in a convention object. Next we assign the values from the convention object properties to the task properties with a closure. This means the value of the properties are lazy set: only when the task gets executed the task property values are calculated.</p>
+<p>Let's take a look at the source files for the plugin, POGO and task before we see what our new build script looks like.</p>
+<pre class="brush:groovy">
+// File: buildSrc/src/main/groovy/com/mrhaki/gradle/generate/GeneratePlugin.groovy
+package com.mrhaki.gradle.generate
+
+import org.gradle.api.Project
+import org.gradle.api.Plugin
+
+class GeneratePlugin implements Plugin&lt;Project&gt; {
+    void apply(Project project) {
+        def convention = new GeneratePluginConvention(project)
+        project.convention.plugins.generate = convention
+
+        project.tasks.withType(Generate.class).allTasks { Generate task -&gt;
+            task.conventionMapping.version = { convention.outputVersion ?: project.version }
+            task.conventionMapping.outputFile = { convention.outputFile }
+        }
+    }
+}
+</pre>
+<pre class="brush:groovy">
+// File: buildSrc/src/main/groovy/com/mrhaki/gradle/generate/GeneratePluginConvention.groovy
+package com.mrhaki.gradle.generate
+
+import org.gradle.api.Project
+
+class GeneratePluginConvention {
+    final Project project
+    String outputFilename
+    String outputVersion
+
+    public GeneratePluginConvention(Project project) {
+        this.project = project
+        this.outputFilename = 'version.txt'
+    }
+
+    File getOutputFile() {
+        project.file("$project.buildDir/$outputFilename")
+    }
+}
+</pre>
+<pre class="brush:groovy">
+// File: buildSrc/src/main/groovy/com/mrhaki/gradle/generate/Generate.groovy
+package com.mrhaki.gradle.generate
+
+import org.gradle.api.internal.ConventionTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
+
+class Generate extends ConventionTask {
+    @Input
+    String version
+
+    @OutputFile
+    File outputFile
+
+    @TaskAction
+    void generate() {
+        def file = getOutputFile()
+        if (!file.isFile()) {
+            file.parentFile.mkdirs()
+            file.createNewFile()
+        }
+        file.write "Version: ${getVersion()}"
+    }
+}
+</pre>
+<p>Our build script has changed to:</p>
+<pre class="brush:groovy">
+// File: build.gradle
+import com.mrhaki.gradle.generate.*
+
+apply plugin: GeneratePlugin
+
+version = '3.0'
+// Or use explicit values:
+// outputVersion = 'OUTPUT' 
+// outputFilename = 'another-version.txt'
+
+task generateVersionFile(type: Generate)
+
+task showContents << {
+    println generateVersionFile.outputFile.text
+}
+showContents.dependsOn generateVersionFile
+</pre>
+<p>The <em>version</em> property value of the <code>Generate</code> task is now set by either a project property <em>outputVersion</em> or the project version. And the <em>outputFile</em> property is assigned from the default <code>version.txt</code> or the value of the property property <em>outputFilename</em>.</p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2010/10/gradle-goodness-set-task-values-with.html">Original blog post</a> written on October 14, 2010.
+</p>
+
+</body>
+</html>

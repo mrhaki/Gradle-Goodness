@@ -1,0 +1,72 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Running Java Applications from External Dependency</h3>
+
+<div class="post">
+<p>With Gradle we can execute Java applications using the <code>JavaExec</code> task or the <code>javaexec()</code> method. If we want to run Java code from an external dependency we must first pull in the dependency with the Java application code. The best way to do this is to create a new dependency configuration. When we configure a task with type <code>JavaExec</code> we can set the classpath to the external dependency. Notice we cannot use the <code>buildscript{}</code> script block to set the classpath. A <code>JavaExec</code> task will fork a new Java process so any classpath settings via <code>buildscript{}</code> are ignored.</p><p>In the following example build script we want to execute the Java class <code>org.apache.cxf.tools.wsdlto.WSDLToJava</code> from Apache CXF to generate Java classes from a given WSDL. We define a new dependency configuration with the name <code>cxf</code> and use it to assign the CXF dependencies to it. We use the <code>classpath</code> property of the <code>JavaExec</code> task to assign the configuration dependency.</p><pre class="brush:groovy">// File: build.gradle
+
+// Base plugin for task rule clean&lt;task&gt;
+apply plugin: 'base'
+
+repositories.mavenCentral()
+
+// New configuration for CXF dependencies.
+configurations { cxf }
+
+ext {
+    // CXF version.
+    cxfVersion = '2.6.2'
+
+    // Artifacts for CXF dependency.
+    cxfArtifacts = [
+        'cxf-tools-wsdlto-frontend-jaxws', 
+        'cxf-tools-wsdlto-databinding-jaxb', 
+        'cxf-tools-common', 
+        'cxf-tools-wsdlto-core'
+    ]
+}
+
+dependencies {
+    // Assign CXF dependencies to configuration.
+    cxfArtifacts.each { artifact -&gt;
+        cxf "org.apache.cxf:$artifact:$cxfVersion"
+    }
+}
+
+// Custom task to generate Java classes
+// from WSDL.
+task wsdl2java(type: JavaExec) {
+    ext {
+        wsdlFile = 'src/wsdl/service-contract.wsdl'
+        outputDir = file("$buildDir/generated/cxf")
+    }
+
+    inputs.file file(wsdlFile)
+    outputs.dir outputDir
+
+    // Main Java class to invoke.
+    main = 'org.apache.cxf.tools.wsdlto.WSDLToJava'
+
+    // Set classpath to dependencies assigned
+    // to the cxf configuration.
+    classpath = configurations.cxf
+
+    // Arguments to be passed to WSDLToJava.
+    args '-d', outputDir
+    args '-client'
+    args '-verbose'
+    args '-validate'
+    args wsdlFile
+}
+</pre><p><em>Code written with Gradle 1.2</em></p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2012/10/gradle-goodness-running-java.html">Original blog post</a> written on October 22, 2012.
+</p>
+
+</body>
+</html>

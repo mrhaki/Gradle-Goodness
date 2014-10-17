@@ -1,0 +1,148 @@
+<html>
+<head>
+</head>
+<body>
+
+<h3 class="post-title">Running a Single Test</h3>
+
+<div class="post">
+<p>We can run test code with Gradle using the <code>test</code> task that is added by the Java plugin. By default all tests found in the project are executed. If we want to run a single test we can use the Java system property <code>test.single</code> with the name of the test. Actually the pattern for the system property is <code><em>taskName</em>.single</code>. The <code>taskName</code> is the name of the task of type <code>Test</code> in our project. We will see how we can use this in our builds.</p><p>First we create a simple <code>build.gradle</code> file to run our tests:</p><pre class="brush:groovy">// File: build.gradle
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile 'junit:junit:[4,)'
+}
+
+test {
+    testLogging {
+        // Show that tests are run in the command-line output
+        events 'started', 'passed'
+    }
+}
+</pre><p>Next we create two test classes with each a single test method, just to demonstrate we can invoke them as single test later on.</p><pre class="brush:java">// File: src/test/java/com/mrhaki/gradle/SampleTest.java
+package com.mrhaki.gradle;
+
+import static org.junit.Assert.*;
+import org.junit.*;
+
+public class SampleTest {
+
+    @Test public void sample() {
+        assertEquals("Gradle is gr8", "Gradle is gr8");
+    }
+    
+}
+</pre><br />
+<pre class="brush:java">// File: src/test/java/com/mrhaki/gradle/AnotherSampleTest.java
+package com.mrhaki.gradle;
+
+import static org.junit.Assert.*;
+import org.junit.*;
+
+public class AnotherSampleTest {
+
+    @Test public void anotherSample() {
+        assertEquals("Gradle is great", "Gradle is great");
+    }
+}
+</pre><p>To only run the <code>SampleTest</code> we must invoke the <code>test</code> task from the command-line with the Java system property <code>-Dtest.single=Sample</code>:</p><pre class="brush:plain;light:true">$ gradle -Dtest.single=Sample test
+:compileJava UP-TO-DATE
+:processResources UP-TO-DATE
+:classes UP-TO-DATE
+:compileTestJava
+:processTestResources UP-TO-DATE
+:testClasses
+:test
+
+com.mrhaki.gradle.SampleTest &gt; sample STARTED
+
+com.mrhaki.gradle.SampleTest &gt; sample PASSED
+
+BUILD SUCCESSFUL
+
+Total time: 11.404 secs
+</pre><p>Notice only one test is execute now. Gradle will get the value <em>Sample</em> and uses it in the following pattern <em>**/&lt;Java system property value=Sample&gt;*.class</em> to find the test class. So we don't have to type the full package and class name of our single test class. To only invoke the <code>AnotherSampleTest</code> test class we run the <code>test</code> task with a different value for the Java systme property:</p><pre class="brush:plain;light:true">$ gradle -Dtest.single=AnotherSample test
+:compileJava UP-TO-DATE
+:processResources UP-TO-DATE
+:classes UP-TO-DATE
+:compileTestJava
+:processTestResources UP-TO-DATE
+:testClasses UP-TO-DATE
+:test
+
+com.mrhaki.gradle.AnotherSampleTest &gt; anotherSample STARTED
+
+com.mrhaki.gradle.AnotherSampleTest &gt; anotherSample PASSED
+
+BUILD SUCCESSFUL
+
+Total time: 5.62 secs
+</pre><p>We can also use a pattern for the Java system property to run multiple tests that apply to the pattern. For example we can use <em>*Sample</em> to run both <code>SampleTest</code> and <code>AnotherSampleTest</code>:</p><pre class="brush:plain;light:true">$ gradle -Dtest.single=*Sample test
+:compileJava UP-TO-DATE
+:processResources UP-TO-DATE
+:classes UP-TO-DATE
+:compileTestJava
+:processTestResources UP-TO-DATE
+:testClasses UP-TO-DATE
+:test
+
+com.mrhaki.gradle.AnotherSampleTest &gt; anotherSample STARTED
+
+com.mrhaki.gradle.AnotherSampleTest &gt; anotherSample PASSED
+
+com.mrhaki.gradle.SampleTest &gt; sample STARTED
+
+com.mrhaki.gradle.SampleTest &gt; sample PASSED
+
+BUILD SUCCESSFUL
+
+Total time: 5.605 secs
+</pre><p>To show the Java system property also works for other tasks of type <code>Test</code> we add a new task to our <code>build.gradle</code> file. We name the task <code>sampleTest</code> and include our tests. We also apply the same <code>testLogging</code> now to all tasks with type <code>Test</code> so we can see the output.</p><pre class="brush:groovy;highlight:[11,12,13,15,16,17,18,19]">// File: build.gradle
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile 'junit:junit:[4,)'
+}
+
+task sampleTest(type: Test, dependsOn: testClasses) {
+    include '**/*Sample*'
+}
+
+tasks.withType(Test) {
+    testLogging {
+        events 'started', 'passed'
+    }
+}
+</pre><p>Next we want to run only the <code>SampleTest</code> class, but now we use the Java system property <code>-DsampleTest.single=S*</code>:</p><pre class="brush:plain;light:true">$ gradle -DsampleTest.single=S* sampleTest
+:compileJava UP-TO-DATE
+:processResources UP-TO-DATE
+:classes UP-TO-DATE
+:compileTestJava UP-TO-DATE
+:processTestResources UP-TO-DATE
+:testClasses UP-TO-DATE
+:sampleTest
+
+com.mrhaki.gradle.SampleTest &gt; sample STARTED
+
+com.mrhaki.gradle.SampleTest &gt; sample PASSED
+
+BUILD SUCCESSFUL
+
+Total time: 10.677 secs
+</pre><p>Code written with Gradle 1.6</p
+</div>
+
+<p>
+    <a href="http://mrhaki.blogspot.com/2013/05/gradle-goodness-running-single-test.html">Original blog post</a> written on May 13, 2013.
+</p>
+
+</body>
+</html>
